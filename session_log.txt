@@ -1,0 +1,12 @@
+User: hie
+AI: 👋🙄
+Tokens Used: 45
+==================================================
+User: hlo
+AI: 🙄👋
+Tokens Used: 45
+==================================================
+User: hie
+AI: Oh, "hie!" That's a nice creative twist on saying "hi"! I love how it's like a secret handshake with the keys on your keyboard. Welcome to the world where vowels have minds of their own! How can I assist you today?
+Tokens Used: 86
+==================================================
