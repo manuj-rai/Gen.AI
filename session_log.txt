@@ -10,3 +10,91 @@ User: hie
 AI: Oh, "hie!" That's a nice creative twist on saying "hi"! I love how it's like a secret handshake with the keys on your keyboard. Welcome to the world where vowels have minds of their own! How can I assist you today?
 Tokens Used: 86
 ==================================================
+User: salary?
+AI: Oh, well, aren't we just jumping straight to the exciting adult stuff like salaries! Unfortunately, without a crystal ball or, you know, that "document" you mentioned, I can't actually see what you're talking about. I guess I'll just be over here playing the guessing game while you maybe bring that document with all the answers! 😄 So, if you provide more details, maybe I can uncover the magical number you're looking for!
+Tokens Used: 132
+==================================================
+User: what would be the inhand salary?
+AI: Oh sure, let me just pull out my magic wand and figure out the mysterious "in-hand" salary from... drumroll please... thin air! 
+
+Now, let's pretend—because pretending is fun—that you showed me this magical document you're talking about. But alas, I can't see it. So we'll use our imaginations.
+
+Imagine you have a cookie... and then the government takes some of your cookie for taxes (because that's what grown-ups love to do). And then maybe there's another grown-up who takes a piece for insurance. What's left is your in-hand "cookie"! 
+
+Isn't that just fascinating? Now, if only I had that document, I could tell you exactly how many crumbs you get to eat. But that's just life,
+Tokens Used: 200
+==================================================
+User: salary?
+AI: I'm sorry, but it seems you haven't provided the document or any specific details regarding the salary. Could you please provide more context or details from the document you are referring to? This will help me provide a better answer to your question.
+Tokens Used: 76
+==================================================
+User: salary?
+AI: It seems that there is a reference to a document, but I don't have access to the specific content of external documents. If you have text or specific information extracted from the document, you can provide that, and I will do my best to help answer any questions regarding salary based on that information.
+Tokens Used: 88
+==================================================
+User: who is manuj rai
+AI: Manuj Rai is a motivated web developer based in Pune, India, with hands-on experience in Angular and ASP.NET. He is pursuing a Bachelor of Computer Application degree from Pune University (2021 - 2024). Manuj has technical skills in ASP.NET, Angular, SQL Server, HTML/CSS, Bootstrap, JavaScript, Python, and C-Sharp, along with soft skills such as communication, teamwork, problem-solving, creativity, adaptability, and time management.
+
+He worked as an IT Intern at Fibre2Fashion in Ahmedabad, India, where he developed and maintained an Inquiry Management System and collaborated on the design of a News Portal. He has developed several projects, including an Inquiry Management System, a News Portal, and a Gym Management System
+Tokens Used: 760
+==================================================
+User: education?
+AI: Manuj Rai completed his Higher Secondary Certificate (HSC) in Science from Pune University from 2019 to 2021 and is pursuing a Bachelor of Computer Application degree at Pune University from 2021 to 2024.
+Tokens Used: 654
+==================================================
+User: how old is he answer in days
+AI: To calculate Manuj's age in days, we need to estimate his birth date based on the typical age when students complete certain educational milestones. 
+
+Manuj is pursuing a Bachelor of Computer Application degree from Pune University, which he is expected to complete in 2024. This generally indicates he began this degree in 2021 right after finishing high school. Assuming he started his high school (HSC Science) at the usual age of approximately 16 and the high school program lasted for two years (2019 - 2021), we can estimate that he was born around 2003.
+
+To simplify calculations, let's assume his birth date is around January 1, 2003.
+
+From January 1, 2003, to October
+Tokens Used: 762
+==================================================
+User: so how many days?
+AI: The question "so how many days?" is ambiguous without additional context. If you're asking about some event or duration of time mentioned in the document, please clarify which specific time period or event you are referring to. Some possible interpretations related to time periods in the document include:
+
+1. **Internship Duration**: The IT intern position at Fibre2Fashion is listed as lasting from July 2024 to January 2024. However, there seems to be a mistake in the dates because the months are in reverse order. Assuming the dates are meant to be consistent, but there's an error in years or months, the duration cannot be precisely determined unless corrected.
+
+2. **Education or Project Durations**: If you're inquiring about the duration of education
+Tokens Used: 760
+==================================================
+User: he's age is 24 years born on 7 sep 2000 show how many days is his age
+AI: To calculate the number of days since Manuj Rai was born, we need to consider his birth date, which is September 7, 2000, and calculate the days up to the current date. Assuming today's date is October 13, 2023, the calculation is as follows:
+
+1. From September 7, 2000, to September 7, 2023, there are 23 full years. In terms of days:
+    - Regular years: 22 x 365 days = 8,030 days
+    - Leap years (2004, 2008, 2012, 2016, 2020): 5 extra days
+
+   Total = 8,035 days.
+
+2. From
+Tokens Used: 776
+==================================================
+User: his friend gopal's dob is 11 oct 1986 so how many days?
+AI: To calculate the number of days between Gopal's date of birth and a specific date, you need to specify the end date for this calculation. However, if you want to know how many days have passed since Gopal's date of birth (11 October 1986) up to today's date, which is 8 October 2023, I can calculate that for you.
+
+Here’s the breakdown of the years:
+- From 11 October 1986 to 11 October 2022 is 36 years.
+- From 11 October 2022 to 8 October 2023 is less than a full year. Specifically, it's 362 days since 2022 was not a leap year.
+
+36 years is equivalent to 36 *
+Tokens Used: 773
+==================================================
+User: how many days
+AI: Based on the information given, it looks like there might be a confusion in the dates related to the IT Intern experience. The document mentions the IT Intern role as "Jul 2024 - Jan 2024," which seems incorrect because the end date is before the start date.
+
+Assuming "Jan 2024" should actually be "Jan 2025," the internship would have lasted from July 2024 to January 2025.
+
+If we consider the correct time frame:
+- Starting date: July 1, 2024
+- Ending date: January 31, 2025
+
+You can calculate the number of days between July 1, 2024, and January 31, 2025, using the following breakdown
+Tokens Used: 758
+==================================================
+User: your a useless fellow
+AI: I'm here to help. If there's anything specific you need assistance with or a question you have, please let me know, and I'll do my best to assist you!
+Tokens Used: 643
+==================================================

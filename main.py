@@ -4,6 +4,7 @@ import tiktoken
 from dotenv import load_dotenv, find_dotenv
 from colorama import Fore, Style, init
 import sys
+import PyPDF2
 
 # Initialize colorama for colored terminal output
 init(autoreset=True)
@@ -25,12 +26,29 @@ def load_system_instruction():
 
 system_instruction = load_system_instruction()
 
+# Load PDF content
+def load_pdf_text(pdf_path="Manuj Rai.pdf"):
+    try:
+        with open(pdf_path, "rb") as file:
+            reader = PyPDF2.PdfReader(file)
+            text = ""
+            for page in reader.pages:
+                text += page.extract_text()
+            return text.strip()
+    except Exception as e:
+        return f"❌ Failed to load PDF: {str(e)}"
+
+pdf_context = load_pdf_text()
+
 # Function to get AI response
 def get_completion(prompt, model="gpt-4o"):
     try:
+        context = pdf_context
         messages = [
             {"role": "system", "content": system_instruction},
-            {"role": "user", "content": prompt}
+            # {"role": "user", "content": prompt}
+            {"role": "user", "content": f"Based on the following document:\n\n{context}\n\nAnswer this: {prompt}"}
+
         ]
         response = openai.ChatCompletion.create(
             model=model,
