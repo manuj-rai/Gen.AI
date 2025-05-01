@@ -1,0 +1,5 @@
+openai>=1.0.0
+tiktoken>=0.5.1
+python-dotenv>=1.0.0
+colorama>=0.4.6
+PyPDF2>=3.0.1
