@@ -98,3 +98,7 @@ User: your a useless fellow
 AI: I'm here to help. If there's anything specific you need assistance with or a question you have, please let me know, and I'll do my best to assist you!
 Tokens Used: 643
 ==================================================
+User: hie who r u
+AI: Hello! I'm a virtual assistant here to help you with any questions you may have. It seems like you're reviewing a document related to a web developer named Manuj Rai. If you have any specific questions about the document or need assistance with something else, feel free to let me know!
+Tokens Used: 667
+==================================================
