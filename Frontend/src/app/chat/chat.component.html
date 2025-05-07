@@ -1,7 +1,7 @@
 <!-- Floating Chat Toggle Button -->
 <button
   (click)="toggleChat()"
-  class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all"
+  class="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all z-50"
   aria-label="Toggle Chat"
 >
   <span *ngIf="!isChatOpen">💬</span>
@@ -10,8 +10,9 @@
 
 <!-- Chat Box -->
 <div
+  [@chatSlide]="isChatOpen ? 'open' : 'closed'"
   *ngIf="isChatOpen"
-  class="fixed bottom-20 right-6 w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col h-[500px] border border-gray-200 dark:border-gray-700 overflow-hidden transition-all"
+  class="fixed bottom-24 right-6 w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-2xl flex flex-col h-[500px] border border-gray-200 dark:border-gray-700 overflow-hidden transition-all"
 >
   <div class="px-4 py-3 bg-blue-600 text-white text-lg font-semibold">
     AI Chat Assistant
@@ -50,7 +51,8 @@
       (click)="askQuestion()"
       class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
     >
-      Send
+    <!-- <lucide-send class="w-5 h-5" />
+    <span class="sr-only">Send</span> -->
     </button>
   </div>
 

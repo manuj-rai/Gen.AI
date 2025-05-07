@@ -4,14 +4,17 @@ import {
   ViewChild,
   AfterViewInit
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ChatService } from '../services/chat.service';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule  
+  ],
   templateUrl: './chat.component.html',
 })
 export class ChatComponent implements AfterViewInit {
@@ -22,13 +25,16 @@ export class ChatComponent implements AfterViewInit {
 
   @ViewChild('messageContainer') messageContainer!: ElementRef;
 
-  constructor(private chatService: ChatService) {}
+  constructor(private chatService: ChatService) {
+    console.log('ChatComponent loaded');
+  }
 
   ngAfterViewInit() {
     this.scrollToBottom();
   }
 
   toggleChat() {
+    console.log('Chat toggle clicked');
     this.isChatOpen = !this.isChatOpen;
     setTimeout(() => this.scrollToBottom(), 100);
   }

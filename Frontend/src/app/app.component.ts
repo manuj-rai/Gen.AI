@@ -5,6 +5,10 @@ import { ChatComponent } from './chat/chat.component';
   selector: 'app-root',
   standalone: true,
   imports: [ChatComponent],
-  templateUrl: 'app.component.html',
+  template: `
+    <div class="h-screen w-screen bg-gray-100 dark:bg-gray-900">
+      <app-chat></app-chat>
+    </div>
+  `
 })
 export class AppComponent {}
