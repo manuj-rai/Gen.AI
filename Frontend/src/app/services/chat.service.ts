@@ -12,7 +12,7 @@ interface ChatResponse {
   providedIn: 'root',
 })
 export class ChatService {
-  private apiUrl = 'http://localhost:5000/ask';
+  private apiUrl = 'https://gen-ai-qk66.onrender.com/ask';
 
   constructor(private http: HttpClient) {}
 
