@@ -47,8 +47,10 @@ system_instruction = load_system_instruction()
 def index():
     return "✅ PDF Q&A API is running"
 
-@app.route('/ask', methods=['POST'])
+@app.route('/ask', methods=['GET', 'POST'])
 def ask():
+    if request.method == 'GET':
+        return "Use POST with JSON to interact."
     data = request.get_json()
     prompt = data.get("prompt", "")
     model = data.get("model", "gpt-4o")
