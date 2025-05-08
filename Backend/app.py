@@ -43,6 +43,10 @@ def load_system_instruction():
 
 system_instruction = load_system_instruction()
 
+@app.route('/')
+def index():
+    return "✅ PDF Q&A API is running"
+
 @app.route('/ask', methods=['POST'])
 def ask():
     data = request.get_json()
