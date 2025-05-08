@@ -13,7 +13,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Load PDF content
-def load_pdf_text(pdf_path="Manuj Rai.pdf"):
+def load_pdf_text(pdf_path=os.path.join("Backend", "Manuj Rai.pdf")):
     try:
         full_path = os.path.abspath(pdf_path)
         print(f"📄 Loading PDF from: {full_path}")
