@@ -7,6 +7,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../services/chat.service';
+import { trigger, transition, style, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-chat',
@@ -14,6 +15,17 @@ import { ChatService } from '../services/chat.service';
   imports: [
     CommonModule,
     FormsModule  
+  ],
+  animations: [
+    trigger('chatSlide', [
+      transition(':enter', [
+        style({ transform: 'translateY(100%)', opacity: 0 }),
+        animate('300ms ease-out', style({ transform: 'translateY(0)', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('300ms ease-in', style({ transform: 'translateY(100%)', opacity: 0 }))
+      ])
+    ])
   ],
   templateUrl: './chat.component.html',
 })

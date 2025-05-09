@@ -51,30 +51,42 @@ def index():
 def ask():
     if request.method == 'GET':
         return "Use POST with JSON to interact."
-    data = request.get_json()
-    prompt = data.get("prompt", "")
-    model = data.get("model", "gpt-4o")
-
-    if not prompt:
-        return jsonify({"error": "Prompt is required"}), 400
-
-    messages = [
-        {"role": "system", "content": system_instruction},
-        {"role": "user", "content": f"Based on the following document:\n{pdf_context}\n\nAnswer this: {prompt}"}
-    ]
 
     try:
+        data = request.get_json()
+        print("🟡 Incoming request data:", data)
+
+        prompt = data.get("prompt", "")
+        model = data.get("model", "gpt-4o")
+        print(f"🟡 Model: {model}, Prompt: {prompt}")
+
+        if not prompt:
+            return jsonify({"error": "Prompt is required"}), 400
+
+        print("📄 Context length:", len(pdf_context))
+        print("🧠 System instruction:", system_instruction[:100] + "...")
+
+        messages = [
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": f"Based on the following document:\n{pdf_context}\n\nAnswer this: {prompt}"}
+        ]
+
         response = openai.ChatCompletion.create(
             model=model,
             messages=messages,
             temperature=1.0,
             max_tokens=150
         )
+
         content = response['choices'][0]['message']['content']
         tokens_used = response['usage']['total_tokens']
+        print(f"✅ Response received. Tokens used: {tokens_used}")
         return jsonify({"response": content.strip(), "tokens": tokens_used})
+
     except Exception as e:
+        print(f"❌ Exception occurred: {e}")
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
