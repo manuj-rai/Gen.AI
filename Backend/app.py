@@ -1,13 +1,13 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-import openai
+from openai import OpenAI
 import PyPDF2
 from dotenv import load_dotenv, find_dotenv
 
 # Load environment variables
 _ = load_dotenv(find_dotenv())
-openai.api_key = os.getenv('OPENAI_API_KEY')
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 app = Flask(__name__)
 CORS(app)
@@ -47,44 +47,34 @@ system_instruction = load_system_instruction()
 def index():
     return "✅ PDF Q&A API is running"
 
-@app.route('/ask', methods=['GET', 'POST'])
+@app.route('/ask', methods=['POST'])
 def ask():
-    if request.method == 'GET':
-        return "Use POST with JSON to interact."
-
     try:
         data = request.get_json()
-        print("🟡 Incoming request data:", data)
-
         prompt = data.get("prompt", "")
-        model = data.get("model", "gpt-4o")
-        print(f"🟡 Model: {model}, Prompt: {prompt}")
+        model = data.get("model", "gpt-3.5-turbo")
 
         if not prompt:
             return jsonify({"error": "Prompt is required"}), 400
 
-        print("📄 Context length:", len(pdf_context))
-        print("🧠 System instruction:", system_instruction[:100] + "...")
-
         messages = [
             {"role": "system", "content": system_instruction},
-            {"role": "user", "content": f"Based on the following document:\n{pdf_context}\n\nAnswer this: {prompt}"}
+            {"role": "user", "content": f"Based on the document:\n{pdf_context}\n\nAnswer this: {prompt}"}
         ]
 
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model=model,
             messages=messages,
             temperature=1.0,
             max_tokens=150
         )
 
-        content = response['choices'][0]['message']['content']
-        tokens_used = response['usage']['total_tokens']
-        print(f"✅ Response received. Tokens used: {tokens_used}")
+        content = response.choices[0].message.content
+        tokens_used = response.usage.total_tokens
         return jsonify({"response": content.strip(), "tokens": tokens_used})
 
     except Exception as e:
-        print(f"❌ Exception occurred: {e}")
+        print(f"❌ OpenAI error: {e}")
         return jsonify({"error": str(e)}), 500
 
 
