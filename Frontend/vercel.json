@@ -1,17 +1,8 @@
 {
-  "cleanUrls": true,
   "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
-  ],
-  "headers": [
     {
       "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
+      "destination": "/index.html"
     }
   ]
 }
