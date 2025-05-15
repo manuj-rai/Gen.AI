@@ -32,7 +32,13 @@
             'bg-gray-300 dark:bg-gray-700 text-black dark:text-white': msg.user === 'AI'
           }"
         >
-          <strong>{{ msg.user }}:</strong> {{ msg.text }}
+          <strong>{{ msg.user }}:</strong>
+          <ng-container *ngIf="msg.text === '🤖 Typing...'; else normalText">
+            <span class="typing-dots">Typing<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>
+          </ng-container>
+          <ng-template #normalText>
+            {{ msg.text }}
+          </ng-template>
         </div>
       </div>
     </div>

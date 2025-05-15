@@ -27,6 +27,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
       ])
     ])
   ],
+  styleUrl: './chat.component.css',
   templateUrl: './chat.component.html',
 })
 export class ChatComponent implements AfterViewInit {
@@ -45,7 +46,7 @@ export class ChatComponent implements AfterViewInit {
     this.scrollToBottom();
   }
 
-  toggleChat() {
+  public toggleChat() {
     console.log('Chat toggle clicked');
     this.isChatOpen = !this.isChatOpen;
     setTimeout(() => this.scrollToBottom(), 100);
@@ -59,14 +60,19 @@ export class ChatComponent implements AfterViewInit {
     this.prompt = '';
     this.scrollToBottom();
 
+    // Add "Thinking..." placeholder message
+    const thinkingIndex = this.messages.length;
+    this.messages.push({ user: 'AI', text: '🤖 Typing...' });
+    this.scrollToBottom();
+
     this.chatService.sendPrompt(trimmed).subscribe({
       next: (res) => {
-        this.messages.push({ user: 'AI', text: res.response });
+        this.messages[thinkingIndex] = { user: 'AI', text: res.response };
         this.tokens += res.tokens;
         this.scrollToBottom();
       },
       error: () => {
-        this.messages.push({ user: 'AI', text: '❌ Failed to respond' });
+        this.messages[thinkingIndex] = { user: 'AI', text: '❌ Failed to respond' };
         this.scrollToBottom();
       }
     });
