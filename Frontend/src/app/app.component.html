@@ -1,34 +1,100 @@
-<div class="h-screen w-screen bg-gray-100 dark:bg-gray-900">
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900 text-white flex flex-col justify-center items-center px-4 pb-20">
+   
+    <!-- Hero Section -->
+    <div class="min-h-screen flex flex-col justify-center items-center">
+        <h1 class="text-3xl sm:text-5xl md:text-6xl font-bold text-center mb-6 leading-tight">
+            Talk Smart. Automate Fast.
+        </h1>
+        
+        <!-- Subheading -->
+        <p class="text-md sm:text-lg md:text-xl text-gray-300 text-center max-w-2xl mb-10">
+            Supercharge your productivity with our AI chatbot — built for real-time answers, smart automation, and business logic integration.
+        </p>
 
-    <div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white flex flex-col justify-center items-center px-4 py-20">
-    <h1 class="text-4xl md:text-6xl font-bold text-center mb-4">
-        Talk Smart. Automate Fast.
-    </h1>
-    <p class="text-lg md:text-xl text-gray-300 text-center max-w-xl mb-8">
-        Discover how our Generative AI chatbot can streamline your work, provide instant answers, and power up your productivity.
-    </p>
+        <!-- CTA Button -->
         <button
-        (click)="openChat()"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-lg transition"
+            (click)="openChat()"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-base sm:text-lg font-semibold shadow-md transition-all duration-200"
+            aria-label="Try the Chatbot"
         >
-        Try the Chatbot
+            💬 Try the Chatbot
         </button>
 
-    <!-- Optional feature highlights -->
-    <div class="mt-16 grid gap-8 md:grid-cols-3 text-center max-w-5xl w-full">
-        <div>
-        <h3 class="text-xl font-semibold mb-2">Natural Conversations</h3>
-        <p class="text-gray-400">Engage users with human-like, context-aware replies.</p>
-        </div>
-        <div>
-        <h3 class="text-xl font-semibold mb-2">Customizable Workflows</h3>
-        <p class="text-gray-400">Adapt responses to your business logic or dataset.</p>
-        </div>
-        <div>
-        <h3 class="text-xl font-semibold mb-2">24/7 Availability</h3>
-        <p class="text-gray-400">Your intelligent assistant never sleeps.</p>
+        <!-- Feature Highlights -->
+        <div class="mt-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 w-full max-w-6xl px-4">
+            <div class="text-center">
+            <h3 class="text-xl font-semibold mb-2">💡 Natural Conversations</h3>
+            <p class="text-gray-400">Deliver human-like, context-aware interactions for better user engagement.</p>
+            </div>
+            <div class="text-center">
+            <h3 class="text-xl font-semibold mb-2">⚙️ Customizable Workflows</h3>
+            <p class="text-gray-400">Adapt responses to your company’s unique logic and data.</p>
+            </div>
+            <div class="text-center">
+            <h3 class="text-xl font-semibold mb-2">🌙 Always Available</h3>
+            <p class="text-gray-400">Your intelligent assistant is online 24/7 to support your users.</p>
+            </div>
         </div>
     </div>
+
+    <!-- Tech Stack Section -->
+    <div class="mt-24 text-center w-full max-w-6xl px-4">
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">🔧 Technologies Behind the Chatbot</h2>
+        <p class="text-gray-400 text-md sm:text-lg mb-10">
+        Explore the powerful AI stack powering real-time responses, intelligent search, and secure interactions.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- LLM -->
+        <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-left">
+            <h3 class="text-lg font-semibold mb-2">🧠 Large Language Model (LLM)</h3>
+            <p class="text-gray-700 dark:text-gray-300">
+            Powered by OpenAI’s GPT-3.5 / GPT-4 to generate natural, human-like answers in real time.
+            </p>
+        </div>
+
+        <!-- Embeddings -->
+        <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-left">
+            <h3 class="text-lg font-semibold mb-2">📊 Embeddings</h3>
+            <p class="text-gray-700 dark:text-gray-300">
+            Text converted into vector embeddings using <code>text-embedding-ada-002</code> for similarity search.
+            </p>
+        </div>
+
+        <!-- Vector DB -->
+        <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-left">
+            <h3 class="text-lg font-semibold mb-2">📁 Vector Database</h3>
+            <p class="text-gray-700 dark:text-gray-300">
+            Uses FAISS for fast retrieval of relevant chunks from PDFs or documents before answering.
+            </p>
+        </div>
+
+        <!-- Chunking -->
+        <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-left">
+            <h3 class="text-lg font-semibold mb-2">📄 Text Chunking</h3>
+            <p class="text-gray-700 dark:text-gray-300">
+            Uses smart chunking (500 tokens + overlap) to process large documents efficiently for QA.
+            </p>
+        </div>
+
+        <!-- LangChain -->
+        <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-left">
+            <h3 class="text-lg font-semibold mb-2">🔗 LangChain Integration</h3>
+            <p class="text-gray-700 dark:text-gray-300">
+            LangChain powers the RAG pipeline with retriever + LLM orchestration for grounded answers.
+            </p>
+        </div>
+
+        <!-- Flask API -->
+        <div class="bg-gray-100 dark:bg-gray-800 p-6 rounded-xl shadow-lg text-left">
+            <h3 class="text-lg font-semibold mb-2">🔒 Flask Backend</h3>
+            <p class="text-gray-700 dark:text-gray-300">
+            Lightweight Python Flask API handles PDF loading, prompt construction, and OpenAI interaction.
+            </p>
+        </div>
+        </div>
     </div>
-<app-chat></app-chat>
+
+  <!-- Chat App Component -->
+  <app-chat class="mt-24 w-full max-w-5xl"></app-chat>
 </div>

@@ -27,6 +27,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
   styleUrl: './chat.component.css',
   templateUrl: './chat.component.html',
 })
+
 export class ChatComponent implements AfterViewInit {
   prompt = '';
   tokens = 0;
@@ -51,12 +52,24 @@ export class ChatComponent implements AfterViewInit {
 
     // Show welcome message only on the first open
     if (this.isChatOpen && !this.hasWelcomed) {
+      this.hasWelcomed = true;
+
+      // Optional: show typing placeholder
       this.messages.push({
         user: 'AI',
-        text: '👋 Welcome! How can I assist you today?',
+        text: '🤖 Typing...',
       });
-      this.hasWelcomed = true;
       this.scrollToBottom();
+
+      // Replace with real welcome message after a short delay
+      setTimeout(() => {
+        this.messages.pop(); // remove typing indicator
+        this.messages.push({
+          user: 'AI',
+          text: '👋 Welcome! How can I assist you today?',
+        });
+        this.scrollToBottom();
+      }, 800); // 800ms delay
     }
   }
 
