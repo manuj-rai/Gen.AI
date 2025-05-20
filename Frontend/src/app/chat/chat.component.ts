@@ -12,10 +12,7 @@ import { trigger, transition, style, animate } from '@angular/animations';
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule  
-  ],
+  imports: [CommonModule, FormsModule],
   animations: [
     trigger('chatSlide', [
       transition(':enter', [
@@ -35,6 +32,7 @@ export class ChatComponent implements AfterViewInit {
   tokens = 0;
   isChatOpen = false;
   hasWelcomed = false;
+
   messages: { user: 'User' | 'AI'; text: string }[] = [];
 
   @ViewChild('messageContainer') messageContainer!: ElementRef;
@@ -50,12 +48,16 @@ export class ChatComponent implements AfterViewInit {
   public toggleChat() {
     console.log('Chat toggle clicked');
     this.isChatOpen = !this.isChatOpen;
-        this.messages.push({
-      user: 'AI',
-      text: '👋 Welcome! How can I assist you today?',
-    });
-    this.hasWelcomed = true;
-    setTimeout(() => this.scrollToBottom(), 100);
+
+    // Show welcome message only on the first open
+    if (this.isChatOpen && !this.hasWelcomed) {
+      this.messages.push({
+        user: 'AI',
+        text: '👋 Welcome! How can I assist you today?',
+      });
+      this.hasWelcomed = true;
+      this.scrollToBottom();
+    }
   }
 
   askQuestion() {
@@ -66,7 +68,7 @@ export class ChatComponent implements AfterViewInit {
     this.prompt = '';
     this.scrollToBottom();
 
-    // Add "Thinking..." placeholder message
+    // Add "Typing..." placeholder
     const thinkingIndex = this.messages.length;
     this.messages.push({ user: 'AI', text: '🤖 Typing...' });
     this.scrollToBottom();
