@@ -34,6 +34,7 @@ export class ChatComponent implements AfterViewInit {
   prompt = '';
   tokens = 0;
   isChatOpen = false;
+  hasWelcomed = false;
   messages: { user: 'User' | 'AI'; text: string }[] = [];
 
   @ViewChild('messageContainer') messageContainer!: ElementRef;
@@ -49,6 +50,11 @@ export class ChatComponent implements AfterViewInit {
   public toggleChat() {
     console.log('Chat toggle clicked');
     this.isChatOpen = !this.isChatOpen;
+        this.messages.push({
+      user: 'AI',
+      text: '👋 Welcome! How can I assist you today?',
+    });
+    this.hasWelcomed = true;
     setTimeout(() => this.scrollToBottom(), 100);
   }
 
