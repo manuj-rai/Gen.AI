@@ -20,13 +20,9 @@
     AI Chat Assistant
   </div>
 
-  <!-- Messages -->
-  <div
-    #messageContainer
-    class="flex-1 overflow-y-auto bg-gray-100 dark:bg-gray-800 p-3 sm:p-4 space-y-3"
-    style="scroll-behavior: smooth;"
-  >
-    <div *ngFor="let msg of messages">
+  <!-- Message display -->
+  <div #messageContainer class="flex-1 overflow-y-auto p-4">
+    <div *ngFor="let msg of messages" class="mb-2">
       <div [ngClass]="msg.user === 'User' ? 'text-right' : 'text-left'">
         <div
           [ngClass]="{
@@ -35,35 +31,37 @@
             'bg-gray-300 dark:bg-gray-700 text-black dark:text-white': msg.user === 'AI'
           }"
         >
-          <strong>{{ msg.user }}:</strong>
+          <strong>{{ msg.user }}:</strong>&nbsp;
           <ng-container *ngIf="msg.text === '🤖 Typing...'; else normalText">
             <span class="typing-dots">Typing<span class="dot">.</span><span class="dot">.</span><span class="dot">.</span></span>
           </ng-container>
-          <ng-template #normalText>
-            {{ msg.text }}
-          </ng-template>
+          <ng-template #normalText>{{ msg.text }}</ng-template>
+          <div class="text-xs text-gray-500 mt-1">{{ msg.timestamp | date: 'shortTime' }}</div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Input -->
-  <div class="p-3 border-t border-gray-300 dark:border-gray-700 flex gap-2 items-end">
+  <!-- Input + Actions -->
+  <div class="p-3 border-t flex gap-2 items-end border-gray-700">
     <textarea
       [(ngModel)]="prompt"
       (keydown)="onKeyDown($event)"
+      (input)="autoResize($event)"
       rows="1"
       placeholder="Type your message..."
-      class="flex-1 p-2 resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-      style="max-height: 120px;"
+      class="flex-1 p-2 resize-none rounded-lg border border-gray-900 text-sm bg-gray-700 focus:outline-none"
     ></textarea>
-    <button
-      (click)="askQuestion()"
-      class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
-    >
+    <button (click)="askQuestion()" class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg">
       Send
     </button>
   </div>
+
+  <!-- Clear Button -->
+  <div class="text-center text-sm text-gray-500 mt-2">
+    <button (click)="clearChat()" class="hover:text-red-500">🗑️ Clear Chat</button>
+  </div>
+
 
   <!-- Token Info -->
   <div *ngIf="tokens > 0" class="px-3 pb-2 text-xs text-gray-500 dark:text-gray-400">

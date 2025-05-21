@@ -2,7 +2,8 @@ import {
   Component,
   ElementRef,
   ViewChild,
-  AfterViewInit
+  AfterViewInit,
+  OnInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -27,73 +28,97 @@ import { trigger, transition, style, animate } from '@angular/animations';
   styleUrl: './chat.component.css',
   templateUrl: './chat.component.html',
 })
-
-export class ChatComponent implements AfterViewInit {
+export class ChatComponent implements OnInit, AfterViewInit {
   prompt = '';
   tokens = 0;
   isChatOpen = false;
   hasWelcomed = false;
 
-  messages: { user: 'User' | 'AI'; text: string }[] = [];
+  messages: { user: 'User' | 'AI'; text: string; timestamp?: Date }[] = [];
 
   @ViewChild('messageContainer') messageContainer!: ElementRef;
 
-  constructor(private chatService: ChatService) {
-    console.log('ChatComponent loaded');
+  constructor(private chatService: ChatService) {}
+
+  ngOnInit() {
+    const saved = localStorage.getItem('chatHistory');
+    if (saved) this.messages = JSON.parse(saved);
+
+    this.hasWelcomed = !!saved && this.messages.length > 0;
   }
 
   ngAfterViewInit() {
     this.scrollToBottom();
   }
 
-  public toggleChat() {
-    console.log('Chat toggle clicked');
+  saveChatHistory() {
+    localStorage.setItem('chatHistory', JSON.stringify(this.messages));
+  }
+
+  clearChat() {
+    this.messages = [];
+    localStorage.removeItem('chatHistory');
+  }
+
+  toggleChat() {
     this.isChatOpen = !this.isChatOpen;
 
-    // Show welcome message only on the first open
-    if (this.isChatOpen && !this.hasWelcomed) {
+    const isFirstInteraction = !this.hasWelcomed && this.messages.length === 0;
+
+    if (this.isChatOpen && isFirstInteraction) {
       this.hasWelcomed = true;
 
-      // Optional: show typing placeholder
       this.messages.push({
         user: 'AI',
         text: '🤖 Typing...',
+        timestamp: new Date()
       });
       this.scrollToBottom();
 
-      // Replace with real welcome message after a short delay
       setTimeout(() => {
-        this.messages.pop(); // remove typing indicator
+        this.messages.pop();
         this.messages.push({
           user: 'AI',
           text: '👋 Welcome! How can I assist you today?',
+          timestamp: new Date()
         });
+        this.saveChatHistory();
         this.scrollToBottom();
-      }, 800); // 800ms delay
+      }, 800);
     }
   }
+
 
   askQuestion() {
     const trimmed = this.prompt.trim();
     if (!trimmed) return;
 
-    this.messages.push({ user: 'User', text: trimmed });
+    this.messages.push({ user: 'User', text: trimmed, timestamp: new Date() });
+    this.saveChatHistory();
     this.prompt = '';
     this.scrollToBottom();
 
-    // Add "Typing..." placeholder
     const thinkingIndex = this.messages.length;
-    this.messages.push({ user: 'AI', text: '🤖 Typing...' });
+    this.messages.push({ user: 'AI', text: '🤖 Typing...', timestamp: new Date() });
     this.scrollToBottom();
 
     this.chatService.sendPrompt(trimmed).subscribe({
       next: (res) => {
-        this.messages[thinkingIndex] = { user: 'AI', text: res.response };
+        this.messages[thinkingIndex] = {
+          user: 'AI',
+          text: res.response,
+          timestamp: new Date()
+        };
         this.tokens += res.tokens;
+        this.saveChatHistory();
         this.scrollToBottom();
       },
       error: () => {
-        this.messages[thinkingIndex] = { user: 'AI', text: '❌ Failed to respond' };
+        this.messages[thinkingIndex] = {
+          user: 'AI',
+          text: '❌ Failed to respond',
+          timestamp: new Date()
+        };
         this.scrollToBottom();
       }
     });
@@ -103,6 +128,22 @@ export class ChatComponent implements AfterViewInit {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       this.askQuestion();
+    }
+  }
+
+  autoResize(event: Event) {
+    const textarea = event.target as HTMLTextAreaElement;
+    textarea.style.height = 'auto';
+
+    const maxHeight = 200; // max height in pixels
+    textarea.style.overflowY = 'hidden'; // prevent scroll while expanding
+
+    const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+    textarea.style.height = `${newHeight}px`;
+
+    // Enable scroll if content overflows max height
+    if (textarea.scrollHeight > maxHeight) {
+      textarea.style.overflowY = 'auto';
     }
   }
 
