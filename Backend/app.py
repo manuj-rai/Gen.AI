@@ -11,11 +11,14 @@ from langchain.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 
+from web_loader import fetch_clean_text_from_url
+
 # ------------------------------------------------------------------
 # Load environment variables (especially OPENAI_API_KEY)
 # ------------------------------------------------------------------
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+SOURCE_URL = os.getenv("SOURCE_URL")
 
 # ------------------------------------------------------------------
 # Flask setup
@@ -95,12 +98,16 @@ def preload_data():
     vectorstore = build_vector_store(text)
     print("✅ PDF and system instruction loaded.")
 
-# ------------------------------------------------------------------
-# API: Health check
-# ------------------------------------------------------------------
-@app.route("/health")
-def health():
-    return jsonify({"status": "ok", "version": "1.0"})
+
+def preload_website_data():
+    global vectorstore
+    print(f"🌐 Loading content from: {SOURCE_URL}")
+    text = fetch_clean_text_from_url(SOURCE_URL)
+    if not text:
+        raise RuntimeError("❌ Failed to load content from URL")
+    vectorstore = build_vector_store(text)
+    print("✅ Content loaded and indexed.")    
+
 
 # ------------------------------------------------------------------
 # API: Homepage
@@ -108,6 +115,15 @@ def health():
 @app.route("/")
 def home():
     return "✅ PDF RAG Q&A API is running."
+
+
+# ------------------------------------------------------------------
+# API: Health check
+# ------------------------------------------------------------------
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok", "version": "1.0"})
+
 
 # ------------------------------------------------------------------
 # API: Ask a question

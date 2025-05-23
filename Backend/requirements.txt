@@ -16,5 +16,9 @@ langchain>=0.1.17
 langchain-community>=0.0.17
 faiss-cpu>=1.7.4  # switch to faiss-gpu if needed
 
+# Web scraping support
+requests>=2.31.0
+beautifulsoup4>=4.12.2
+
 # Optional utility (for CLI prints, not strictly required)
 colorama>=0.4.6
