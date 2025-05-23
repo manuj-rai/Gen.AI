@@ -16,7 +16,7 @@ export class ChatService {
 
   constructor(private http: HttpClient) {}
 
-  sendPrompt(prompt: string): Observable<ChatResponse> {
-    return this.http.post<ChatResponse>(this.apiUrl, { prompt });
+  sendPrompt(prompt: string, model = 'gpt-4o'): Observable<ChatResponse> {
+    return this.http.post<ChatResponse>(this.apiUrl, { prompt, model });
   }
 }
