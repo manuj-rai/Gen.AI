@@ -10,38 +10,38 @@ from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
+from langchain.retrievers import EnsembleRetriever
 
 from web_loader import fetch_clean_text_from_url
 
 # ------------------------------------------------------------------
-# Load environment variables (especially OPENAI_API_KEY)
+# Load environment variables from .env
 # ------------------------------------------------------------------
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 SOURCE_URL = os.getenv("SOURCE_URL")
 
 # ------------------------------------------------------------------
-# Flask setup
+# Flask app setup
 # ------------------------------------------------------------------
 app = Flask(__name__)
 CORS(app)
 
 # ------------------------------------------------------------------
-# Configuration
+# Configuration constants
 # ------------------------------------------------------------------
-PDF_PATH = "Manuj Rai.pdf"                            # Static PDF file
-INSTRUCTION_PATH = "instructions.txt"                 # System instruction file
-DEFAULT_MODEL = "gpt-3.5-turbo"                       # Default model to use
-ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"] # Valid models
+PDF_PATH = "Manuj Rai.pdf"                             # Path to the PDF file
+DEFAULT_MODEL = "gpt-3.5-turbo"                        # Default OpenAI model
+ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]  # Supported model list
 
 # ------------------------------------------------------------------
-# Global variables
+# Global vectorstores for each content source
 # ------------------------------------------------------------------
-vectorstore = None
-system_instruction = ""
+pdf_vectorstore = None
+web_vectorstore = None
 
 # ------------------------------------------------------------------
-# Helper: Load PDF and extract text
+# Load and extract text from a PDF file
 # ------------------------------------------------------------------
 def load_pdf_text(pdf_path):
     try:
@@ -57,18 +57,7 @@ def load_pdf_text(pdf_path):
         return ""
 
 # ------------------------------------------------------------------
-# Helper: Load system instruction from file
-# ------------------------------------------------------------------
-def load_system_instruction():
-    try:
-        with open(INSTRUCTION_PATH, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    except Exception as e:
-        print(f"⚠️ Could not load instructions.txt: {e}")
-        return "You are a helpful assistant. Answer based only on the provided context."
-
-# ------------------------------------------------------------------
-# Helper: Build FAISS vector store from text
+# Build a vectorstore from raw text using LangChain + FAISS
 # ------------------------------------------------------------------
 def build_vector_store(text):
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
@@ -77,57 +66,83 @@ def build_vector_store(text):
     return FAISS.from_texts(chunks, embedding=embeddings)
 
 # ------------------------------------------------------------------
-# Helper: Create LangChain QA chain
+# Load PDF and build vectorstore (if successful)
 # ------------------------------------------------------------------
-def create_qa_chain(vectorstore, model_name):
-    retriever = vectorstore.as_retriever(search_type="similarity", k=3)
+def preload_pdf_data():
+    global pdf_vectorstore
+    print("📄 Loading PDF content...")
+    text = load_pdf_text(PDF_PATH)
+    if text:
+        pdf_vectorstore = build_vector_store(text)
+        print("✅ PDF indexed.")
+    else:
+        print("⚠️ No text found in PDF.")
+
+# ------------------------------------------------------------------
+# Load website content and build vectorstore (if successful)
+# ------------------------------------------------------------------
+def preload_website_data():
+    global web_vectorstore
+    print(f"🌐 Fetching from: {SOURCE_URL}")
+    text = fetch_clean_text_from_url(SOURCE_URL)
+    if text:
+        web_vectorstore = build_vector_store(text)
+        print("✅ Website indexed.")
+    else:
+        print("⚠️ Website returned no usable content.")
+
+# ------------------------------------------------------------------
+# Build a RetrievalQA chain using one or both sources
+# ------------------------------------------------------------------
+def create_fallback_qa_chain(model_name):
+    retrievers = []
+    weights = []
+
+    # Add PDF retriever if available
+    if pdf_vectorstore:
+        retrievers.append(pdf_vectorstore.as_retriever(search_type="similarity", k=3))
+        weights.append(1.0)
+
+    # Add website retriever if available
+    if web_vectorstore:
+        retrievers.append(web_vectorstore.as_retriever(search_type="similarity", k=3))
+        weights.append(1.0)
+
+    # Fail if neither source is available
+    if not retrievers:
+        raise RuntimeError("❌ No sources available for answering.")
+
+    # Combine or fallback to single retriever
+    retriever = retrievers[0] if len(retrievers) == 1 else EnsembleRetriever(
+        retrievers=retrievers,
+        weights=weights
+    )
+
     return RetrievalQA.from_chain_type(
         llm=ChatOpenAI(temperature=0, model_name=model_name),
         retriever=retriever,
-        chain_type_kwargs={"prompt": None},  # Uses LangChain's default prompt
+        chain_type_kwargs={"prompt": None},
         return_source_documents=True
     )
 
 # ------------------------------------------------------------------
-# Load everything once at app start
+# Routes
 # ------------------------------------------------------------------
-def preload_data():
-    global vectorstore, system_instruction
-    system_instruction = load_system_instruction()
-    text = load_pdf_text(PDF_PATH)
-    vectorstore = build_vector_store(text)
-    print("✅ PDF and system instruction loaded.")
 
-
-def preload_website_data():
-    global vectorstore
-    print(f"🌐 Loading content from: {SOURCE_URL}")
-    text = fetch_clean_text_from_url(SOURCE_URL)
-    if not text:
-        raise RuntimeError("❌ Failed to load content from URL")
-    vectorstore = build_vector_store(text)
-    print("✅ Content loaded and indexed.")    
-
-
-# ------------------------------------------------------------------
-# API: Homepage
-# ------------------------------------------------------------------
 @app.route("/")
 def home():
-    return "✅ PDF RAG Q&A API is running."
+    return "✅ PDF + Website Q&A API is running"
 
-
-# ------------------------------------------------------------------
-# API: Health check
-# ------------------------------------------------------------------
 @app.route("/health")
 def health():
-    return jsonify({"status": "ok", "version": "1.0"})
+    return jsonify({
+        "status": "ok",
+        "version": "1.1",
+        "pdf_loaded": pdf_vectorstore is not None,
+        "website_loaded": web_vectorstore is not None,
+        "source_url": SOURCE_URL
+    })
 
-
-# ------------------------------------------------------------------
-# API: Ask a question
-# ------------------------------------------------------------------
 @app.route("/ask", methods=["POST"])
 def ask():
     try:
@@ -141,17 +156,14 @@ def ask():
         if model not in ALLOWED_MODELS:
             return jsonify({"error": f"Invalid model: {model}"}), 400
 
-        qa_chain = create_qa_chain(vectorstore, model_name=model)
+        # Create QA chain based on available sources
+        qa_chain = create_fallback_qa_chain(model)
         result = qa_chain(prompt)
 
-        answer = result["result"]
-        source_chunks = [
-            doc.page_content[:200] for doc in result["source_documents"]
-        ]
-
+        # Prepare response with answer and snippet sources
         return jsonify({
-            "response": answer,
-            "sources": source_chunks
+            "response": result["result"],
+            "sources": [doc.page_content[:200] for doc in result["source_documents"]]
         })
 
     except Exception as e:
@@ -159,8 +171,17 @@ def ask():
         return jsonify({"error": str(e)}), 500
 
 # ------------------------------------------------------------------
-# App entry point
+# Start the app and preload sources
 # ------------------------------------------------------------------
 if __name__ == "__main__":
-    preload_data()
+    try:
+        preload_pdf_data()
+    except Exception as e:
+        print(f"⚠️ PDF load failed: {e}")
+
+    try:
+        preload_website_data()
+    except Exception as e:
+        print(f"⚠️ Website load failed: {e}")
+
     app.run(debug=True, host="0.0.0.0", port=5000)
