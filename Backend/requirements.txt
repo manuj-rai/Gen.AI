@@ -9,12 +9,12 @@ PyPDF2>=3.0.1
 
 # OpenAI & embeddings
 openai>=1.3.8
-tiktoken>=0.5.1
+tiktoken>=0.5.1  # required for token counting by OpenAI API
 
-# LangChain & vector store
+# LangChain & vector DB
 langchain>=0.1.17
 langchain-community>=0.0.17
-faiss-cpu>=1.7.4  # or faiss-gpu if you're using GPU
+faiss-cpu>=1.7.4  # switch to faiss-gpu if needed
 
-# Utility
+# Optional utility (for CLI prints, not strictly required)
 colorama>=0.4.6

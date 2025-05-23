@@ -1,23 +1,45 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
+import traceback
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
+
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 
-# Load environment
+# ------------------------------------------------------------------
+# Load environment variables (especially OPENAI_API_KEY)
+# ------------------------------------------------------------------
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+# ------------------------------------------------------------------
 # Flask setup
+# ------------------------------------------------------------------
 app = Flask(__name__)
 CORS(app)
 
-# Load PDF content
+# ------------------------------------------------------------------
+# Configuration
+# ------------------------------------------------------------------
+PDF_PATH = "Manuj Rai.pdf"                 # Static PDF file
+INSTRUCTION_PATH = "instructions.txt"      # System instruction file
+DEFAULT_MODEL = "gpt-3.5-turbo"             # Default model to use
+ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4"] # Valid models
+
+# ------------------------------------------------------------------
+# Global variables
+# ------------------------------------------------------------------
+vectorstore = None
+system_instruction = ""
+
+# ------------------------------------------------------------------
+# Helper: Load PDF and extract text
+# ------------------------------------------------------------------
 def load_pdf_text(pdf_path):
     try:
         reader = PdfReader(pdf_path)
@@ -31,53 +53,85 @@ def load_pdf_text(pdf_path):
         print(f"❌ Error loading PDF: {e}")
         return ""
 
-# Load system instructions
+# ------------------------------------------------------------------
+# Helper: Load system instruction from file
+# ------------------------------------------------------------------
 def load_system_instruction():
     try:
-        with open("instructions.txt", "r", encoding="utf-8") as f:
+        with open(INSTRUCTION_PATH, "r", encoding="utf-8") as f:
             return f.read().strip()
-    except:
+    except Exception as e:
+        print(f"⚠️ Could not load instructions.txt: {e}")
         return "You are a helpful assistant. Answer based only on the provided context."
 
-# Chunk, embed, and store
+# ------------------------------------------------------------------
+# Helper: Build FAISS vector store from text
+# ------------------------------------------------------------------
 def build_vector_store(text):
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.split_text(text)
     embeddings = OpenAIEmbeddings()
-    vectorstore = FAISS.from_texts(chunks, embedding=embeddings)
-    return vectorstore
+    return FAISS.from_texts(chunks, embedding=embeddings)
 
-# Initialization
-PDF_PATH = "Manuj Rai.pdf"
-SYSTEM_INSTRUCTION = load_system_instruction()
-PDF_TEXT = load_pdf_text(PDF_PATH)
-VECTOR_STORE = build_vector_store(PDF_TEXT)
+# ------------------------------------------------------------------
+# Helper: Create LangChain QA chain
+# ------------------------------------------------------------------
+def create_qa_chain(vectorstore, model_name):
+    retriever = vectorstore.as_retriever(search_type="similarity", k=3)
+    return RetrievalQA.from_chain_type(
+        llm=ChatOpenAI(temperature=0, model_name=model_name),
+        retriever=retriever,
+        chain_type_kwargs={"prompt": None},  # Uses LangChain's default prompt
+        return_source_documents=True
+    )
 
-# LangChain QA Chain
-retriever = VECTOR_STORE.as_retriever(search_type="similarity", k=3)
-qa_chain = RetrievalQA.from_chain_type(
-    llm=ChatOpenAI(temperature=0, model_name="gpt-3.5-turbo"),
-    retriever=retriever,
-    chain_type_kwargs={"prompt": None},  # We rely on LangChain's default prompt
-    return_source_documents=True
-)
+# ------------------------------------------------------------------
+# Load everything once at app start
+# ------------------------------------------------------------------
+def preload_data():
+    global vectorstore, system_instruction
+    system_instruction = load_system_instruction()
+    text = load_pdf_text(PDF_PATH)
+    vectorstore = build_vector_store(text)
+    print("✅ PDF and system instruction loaded.")
 
-# Routes
+# ------------------------------------------------------------------
+# API: Health check
+# ------------------------------------------------------------------
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok", "version": "1.0"})
+
+# ------------------------------------------------------------------
+# API: Homepage
+# ------------------------------------------------------------------
 @app.route("/")
 def home():
-    return "✅ PDF RAG Q&A API is running"
+    return "✅ PDF RAG Q&A API is running."
 
+# ------------------------------------------------------------------
+# API: Ask a question
+# ------------------------------------------------------------------
 @app.route("/ask", methods=["POST"])
 def ask():
     try:
         data = request.get_json()
         prompt = data.get("prompt", "").strip()
+        model = data.get("model", DEFAULT_MODEL)
+
         if not prompt:
             return jsonify({"error": "Prompt is required"}), 400
 
+        if model not in ALLOWED_MODELS:
+            return jsonify({"error": f"Invalid model: {model}"}), 400
+
+        qa_chain = create_qa_chain(vectorstore, model_name=model)
         result = qa_chain(prompt)
+
         answer = result["result"]
-        source_chunks = [doc.page_content[:200] for doc in result["source_documents"]]
+        source_chunks = [
+            doc.page_content[:200] for doc in result["source_documents"]
+        ]
 
         return jsonify({
             "response": answer,
@@ -85,9 +139,12 @@ def ask():
         })
 
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print("❌ Exception:", traceback.format_exc())
         return jsonify({"error": str(e)}), 500
 
-# Start app
+# ------------------------------------------------------------------
+# App entry point
+# ------------------------------------------------------------------
 if __name__ == "__main__":
+    preload_data()
     app.run(debug=True, host="0.0.0.0", port=5000)
