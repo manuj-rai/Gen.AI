@@ -32,7 +32,7 @@ CORS(app)
 PDF_PATH = "Manuj Rai.pdf"                 # Static PDF file
 INSTRUCTION_PATH = "instructions.txt"      # System instruction file
 DEFAULT_MODEL = "gpt-3.5-turbo"             # Default model to use
-ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4"] # Valid models
+ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"] # Valid models
 
 # ------------------------------------------------------------------
 # Global variables
