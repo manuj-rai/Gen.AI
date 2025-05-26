@@ -30,7 +30,7 @@ CORS(app)
 # ------------------------------------------------------------------
 # Configuration constants
 # ------------------------------------------------------------------
-PDF_PATH = "Manuj Rai.pdf"                             # Path to the PDF file
+PDF_PATH = os.path.join(os.path.dirname(__file__), "Manuj Rai.pdf")                             # Path to the PDF file
 DEFAULT_MODEL = "gpt-3.5-turbo"                        # Default OpenAI model
 ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]  # Supported model list
 
