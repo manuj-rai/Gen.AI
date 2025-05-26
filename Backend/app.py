@@ -19,6 +19,7 @@ from web_loader import fetch_clean_text_from_url
 # ------------------------------------------------------------------
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+PDF_PATH = os.path.join(os.path.dirname(__file__), os.getenv("PDF_PATH", "Manuj Rai.pdf"))
 SOURCE_URL = os.getenv("SOURCE_URL")
 
 # ------------------------------------------------------------------
@@ -70,13 +71,19 @@ def build_vector_store(text):
 # ------------------------------------------------------------------
 def preload_pdf_data():
     global pdf_vectorstore
-    print("📄 Loading PDF content...")
-    text = load_pdf_text(PDF_PATH)
-    if text:
-        pdf_vectorstore = build_vector_store(text)
-        print("✅ PDF indexed.")
-    else:
-        print("⚠️ No text found in PDF.")
+    print(f"📄 Attempting to load PDF at: {PDF_PATH}")
+
+    try:
+        text = load_pdf_text(PDF_PATH)
+        if text:
+            pdf_vectorstore = build_vector_store(text)
+            print("✅ PDF indexed.")
+        else:
+            print("⚠️ PDF loaded but has no extractable text.")
+    except FileNotFoundError:
+        print(f"❌ PDF file not found: {PDF_PATH}")
+    except Exception as e:
+        print(f"❌ Error reading PDF: {e}")
 
 # ------------------------------------------------------------------
 # Load website content and build vectorstore (if successful)
