@@ -95,35 +95,39 @@ def preload_website_data():
 # Build a RetrievalQA chain using one or both sources
 # ------------------------------------------------------------------
 def create_fallback_qa_chain(model_name):
-    retrievers = []
-    weights = []
+    # Prefer both sources if available
+    if pdf_vectorstore and web_vectorstore:
+        print("✅ Using both PDF and Website sources.")
+        retriever = EnsembleRetriever(
+            retrievers=[
+                pdf_vectorstore.as_retriever(search_type="similarity", k=3),
+                web_vectorstore.as_retriever(search_type="similarity", k=3)
+            ],
+            weights=[1.0, 1.0]
+        )
 
-    # Add PDF retriever if available
-    if pdf_vectorstore:
-        retrievers.append(pdf_vectorstore.as_retriever(search_type="similarity", k=3))
-        weights.append(1.0)
+    # Use only PDF if website failed
+    elif pdf_vectorstore:
+        print("⚠️ Website unavailable. Using PDF only.")
+        retriever = pdf_vectorstore.as_retriever(search_type="similarity", k=3)
 
-    # Add website retriever if available
-    if web_vectorstore:
-        retrievers.append(web_vectorstore.as_retriever(search_type="similarity", k=3))
-        weights.append(1.0)
+    # Use only Website if PDF failed
+    elif web_vectorstore:
+        print("⚠️ PDF unavailable. Using Website only.")
+        retriever = web_vectorstore.as_retriever(search_type="similarity", k=3)
 
-    # Fail if neither source is available
-    if not retrievers:
+    # Fail if both are unavailable
+    else:
         raise RuntimeError("❌ No sources available for answering.")
 
-    # Combine or fallback to single retriever
-    retriever = retrievers[0] if len(retrievers) == 1 else EnsembleRetriever(
-        retrievers=retrievers,
-        weights=weights
-    )
-
+    # Build the QA chain with the chosen retriever
     return RetrievalQA.from_chain_type(
         llm=ChatOpenAI(temperature=0, model_name=model_name),
         retriever=retriever,
         chain_type_kwargs={"prompt": None},
         return_source_documents=True
     )
+
 
 # ------------------------------------------------------------------
 # Routes
