@@ -141,7 +141,7 @@ def create_fallback_qa_chain(model_name):
 
 @app.route("/")
 def home():
-    return "✅ PDF + Website Q&A API is running"
+    return "Sever is running live"
 
 @app.route("/health")
 def health():
@@ -184,13 +184,16 @@ def ask():
 # Start the app and preload sources
 # ------------------------------------------------------------------
 if __name__ == "__main__":
+    print("🚀 App is starting... loading sources.")
     try:
         preload_pdf_data()
+        print("✅ Finished loading PDF.")
     except Exception as e:
         print(f"⚠️ PDF load failed: {e}")
 
     try:
         preload_website_data()
+        print("✅ Finished loading website.")
     except Exception as e:
         print(f"⚠️ Website load failed: {e}")
 
