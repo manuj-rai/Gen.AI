@@ -6,9 +6,9 @@ from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
-from langchain.chat_models import ChatOpenAI
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain.retrievers import EnsembleRetriever
 
@@ -179,22 +179,39 @@ def ask():
     except Exception as e:
         print("❌ Exception:", traceback.format_exc())
         return jsonify({"error": str(e)}), 500
-
+    
 # ------------------------------------------------------------------
-# Start the app and preload sources
+# Run preload logic immediately on import (for Gunicorn compatibility)
 # ------------------------------------------------------------------
-if __name__ == "__main__":
-    print("🚀 App is starting... loading sources.")
-    try:
-        preload_pdf_data()
-        print("✅ Finished loading PDF.")
-    except Exception as e:
-        print(f"⚠️ PDF load failed: {e}")
+print("🚀 App is starting... loading sources.")
 
-    try:
-        preload_website_data()
-        print("✅ Finished loading website.")
-    except Exception as e:
-        print(f"⚠️ Website load failed: {e}")
+try:
+    preload_pdf_data()
+    print("✅ Finished loading PDF.")
+except Exception as e:
+    print(f"⚠️ PDF load failed: {e}")
 
-    app.run(debug=True, host="0.0.0.0", port=5000)
+try:
+    preload_website_data()
+    print("✅ Finished loading website.")
+except Exception as e:
+    print(f"⚠️ Website load failed: {e}")    
+
+# # ------------------------------------------------------------------
+# # Start the app and preload sources
+# # ------------------------------------------------------------------
+# if __name__ == "__main__":
+#     print("🚀 App is starting... loading sources.")
+#     try:
+#         preload_pdf_data()
+#         print("✅ Finished loading PDF.")
+#     except Exception as e:
+#         print(f"⚠️ PDF load failed: {e}")
+
+#     try:
+#         preload_website_data()
+#         print("✅ Finished loading website.")
+#     except Exception as e:
+#         print(f"⚠️ Website load failed: {e}")
+
+#     app.run(debug=True, host="0.0.0.0", port=5000)
