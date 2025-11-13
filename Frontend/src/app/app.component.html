@@ -15,26 +15,26 @@
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
             </span>
-            <span class="text-sm font-medium text-gray-200">AI-Powered • Real-time</span>
+            <span class="text-sm font-medium text-gray-200">HR Assistant • Always Here to Help</span>
         </div>
 
         <h1 class="text-4xl sm:text-6xl md:text-7xl font-extrabold text-center mb-6 leading-tight bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-fade-in-up">
-            Talk Smart.<br />Automate Fast.
+            Your AI HR Policy<br />Assistant
         </h1>
 
         <!-- Subheading -->
         <p class="text-base sm:text-xl md:text-2xl text-gray-300 text-center max-w-3xl mb-12 animate-fade-in-up animation-delay-200 leading-relaxed">
-            Supercharge your productivity with our AI chatbot — built for real-time answers, smart automation, and business logic integration.
+            Get instant, friendly answers about company policies, benefits, leave, and more. Your personal HR assistant powered by advanced AI.
         </p>
 
         <!-- CTA Button -->
         <button
             (click)="openChat()"
             class="group relative inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-8 py-4 rounded-full text-base sm:text-lg font-bold shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 animate-fade-in-up animation-delay-400"
-            aria-label="Try the Chatbot"
+            aria-label="Ask HR Assistant"
         >
             <lucide-icon [img]="MessageSquare" class="w-5 h-5 group-hover:rotate-12 transition-transform duration-300"></lucide-icon>
-            Try the Chatbot
+            Ask HR Assistant
             <span class="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></span>
         </button>
 
@@ -45,17 +45,17 @@
                 <div class="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                     <lucide-icon [img]="MessageSquare" class="w-7 h-7 text-white"></lucide-icon>
                 </div>
-                <h3 class="text-xl font-bold mb-3 text-white">Natural Conversations</h3>
-                <p class="text-gray-300 leading-relaxed">Deliver human-like, context-aware interactions for better user engagement.</p>
+                <h3 class="text-xl font-bold mb-3 text-white">Human-Like Conversations</h3>
+                <p class="text-gray-300 leading-relaxed">Experience warm, empathetic responses that feel like talking to a real HR colleague.</p>
             </div>
 
             <!-- Feature 2 -->
             <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-8 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-purple-500/20 animate-fade-in-up animation-delay-800">
                 <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <lucide-icon [img]="Settings" class="w-7 h-7 text-white"></lucide-icon>
+                    <lucide-icon [img]="FileText" class="w-7 h-7 text-white"></lucide-icon>
                 </div>
-                <h3 class="text-xl font-bold mb-3 text-white">Customizable Workflows</h3>
-                <p class="text-gray-300 leading-relaxed">Adapt responses to your company's unique logic and data.</p>
+                <h3 class="text-xl font-bold mb-3 text-white">Policy Expertise</h3>
+                <p class="text-gray-300 leading-relaxed">Access accurate information about leave, benefits, procedures, and company policies instantly.</p>
             </div>
 
             <!-- Feature 3 -->
@@ -63,8 +63,8 @@
                 <div class="w-14 h-14 bg-gradient-to-br from-pink-500 to-orange-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                     <lucide-icon [img]="Zap" class="w-7 h-7 text-white"></lucide-icon>
                 </div>
-                <h3 class="text-xl font-bold mb-3 text-white">Always Available</h3>
-                <p class="text-gray-300 leading-relaxed">Your intelligent assistant is online 24/7 to support your users.</p>
+                <h3 class="text-xl font-bold mb-3 text-white">24/7 Availability</h3>
+                <p class="text-gray-300 leading-relaxed">Get help anytime, anywhere - no need to wait for HR office hours or email responses.</p>
             </div>
         </div>
     </div>
@@ -72,77 +72,153 @@
     <!-- Tech Stack Section -->
     <div class="mt-32 text-center w-full max-w-6xl px-4 relative z-10">
         <h2 class="text-3xl sm:text-4xl md:text-5xl font-extrabold mb-6 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Technologies Behind the Chatbot
+            Powered by Advanced AI Technology
         </h2>
         <p class="text-gray-300 text-base sm:text-lg mb-16 max-w-3xl mx-auto leading-relaxed">
-            Explore the powerful AI stack powering real-time responses, intelligent search, and secure interactions.
+            A complete demonstration of modern AI stack - from retrieval-augmented generation to intelligent embeddings, showcasing enterprise-grade HR assistance.
         </p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- LLM -->
-            <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20 text-left">
-                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <lucide-icon [img]="Brain" class="w-6 h-6 text-white"></lucide-icon>
+        <!-- Backend Technologies -->
+        <div class="mb-12">
+            <h3 class="text-2xl font-bold text-left mb-6 text-blue-300">🔧 Backend & AI Infrastructure</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- OpenAI GPT -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="Brain" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">OpenAI GPT-4 / GPT-3.5</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Large language models generating human-like, context-aware HR responses with advanced reasoning capabilities.
+                    </p>
                 </div>
-                <h3 class="text-lg font-bold mb-3 text-white">Large Language Model</h3>
-                <p class="text-gray-300 text-sm leading-relaxed">
-                    Powered by OpenAI's GPT-3.5 / GPT-4 to generate natural, human-like answers in real time.
-                </p>
-            </div>
 
-            <!-- Embeddings -->
-            <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-purple-500/20 text-left">
-                <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <lucide-icon [img]="Zap" class="w-6 h-6 text-white"></lucide-icon>
+                <!-- LangChain Framework -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="Link" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">LangChain Framework</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        RAG (Retrieval-Augmented Generation) pipeline orchestrating retriever + LLM for accurate, grounded answers.
+                    </p>
                 </div>
-                <h3 class="text-lg font-bold mb-3 text-white">Embeddings</h3>
-                <p class="text-gray-300 text-sm leading-relaxed">
-                    Text converted into vector embeddings using <code class="text-purple-300">text-embedding-ada-002</code> for similarity search.
-                </p>
-            </div>
 
-            <!-- Vector DB -->
-            <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-green-500/20 text-left">
-                <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <lucide-icon [img]="Database" class="w-6 h-6 text-white"></lucide-icon>
+                <!-- OpenAI Embeddings -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-purple-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="Zap" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">OpenAI Embeddings</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        <code class="text-purple-300">text-embedding-ada-002</code> converts policy text into 1536-dimensional vectors for semantic search.
+                    </p>
                 </div>
-                <h3 class="text-lg font-bold mb-3 text-white">Vector Database</h3>
-                <p class="text-gray-300 text-sm leading-relaxed">
-                    Uses FAISS for fast retrieval of relevant chunks from PDFs or documents before answering.
-                </p>
-            </div>
 
-            <!-- Chunking -->
-            <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-orange-500/20 text-left">
-                <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <lucide-icon [img]="FileText" class="w-6 h-6 text-white"></lucide-icon>
+                <!-- FAISS Vector Store -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-green-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="Database" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">FAISS Vector Database</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Facebook's FAISS enables lightning-fast similarity search across millions of embedded policy documents.
+                    </p>
                 </div>
-                <h3 class="text-lg font-bold mb-3 text-white">Text Chunking</h3>
-                <p class="text-gray-300 text-sm leading-relaxed">
-                    Uses smart chunking (500 tokens + overlap) to process large documents efficiently for QA.
-                </p>
-            </div>
 
-            <!-- LangChain -->
-            <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-500/20 text-left">
-                <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <lucide-icon [img]="Link" class="w-6 h-6 text-white"></lucide-icon>
+                <!-- Flask API -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-red-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="Lock" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">Flask + Python Backend</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Lightweight RESTful API with CORS, handling document processing, embeddings, and OpenAI integration.
+                    </p>
                 </div>
-                <h3 class="text-lg font-bold mb-3 text-white">LangChain Integration</h3>
-                <p class="text-gray-300 text-sm leading-relaxed">
-                    LangChain powers the RAG pipeline with retriever + LLM orchestration for grounded answers.
-                </p>
-            </div>
 
-            <!-- Flask API -->
-            <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-red-500/20 text-left">
-                <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <lucide-icon [img]="Lock" class="w-6 h-6 text-white"></lucide-icon>
+                <!-- Document Processing -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-orange-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="FileText" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">Intelligent Text Processing</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        PyPDF2 + RecursiveCharacterTextSplitter with 500-token chunks and 50-token overlap for optimal context preservation.
+                    </p>
                 </div>
-                <h3 class="text-lg font-bold mb-3 text-white">Flask Backend</h3>
-                <p class="text-gray-300 text-sm leading-relaxed">
-                    Lightweight Python Flask API handles PDF loading, prompt construction, and OpenAI interaction.
-                </p>
+            </div>
+        </div>
+
+        <!-- Frontend Technologies -->
+        <div>
+            <h3 class="text-2xl font-bold text-left mb-6 text-purple-300">🎨 Frontend & User Experience</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Angular -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-red-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-red-600 to-pink-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="Zap" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">Angular 19 (Standalone)</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Modern TypeScript framework with standalone components, reactive forms, and RxJS for real-time chat.
+                    </p>
+                </div>
+
+                <!-- Tailwind CSS -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-cyan-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="Settings" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">Tailwind CSS 3.4</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Utility-first CSS framework with custom animations, glassmorphism effects, and gradient backgrounds.
+                    </p>
+                </div>
+
+                <!-- Lucide Icons -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-yellow-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="Sparkles" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">Lucide Icons</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Beautiful, consistent icon library with 1000+ SVG icons, fully customizable and optimized for Angular.
+                    </p>
+                </div>
+
+                <!-- RxJS -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-pink-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-500 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="Zap" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">RxJS Observables</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Reactive programming for async HTTP calls, real-time updates, and smooth chat message streaming.
+                    </p>
+                </div>
+
+                <!-- TypeScript -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="FileText" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">TypeScript 5.7</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Type-safe development with strict mode, modern ES2022 features, and enhanced IDE support.
+                    </p>
+                </div>
+
+                <!-- Angular SSR -->
+                <div class="group relative bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl hover:shadow-green-500/20 text-left">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-600 to-teal-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                        <lucide-icon [img]="Zap" class="w-6 h-6 text-white"></lucide-icon>
+                    </div>
+                    <h3 class="text-lg font-bold mb-3 text-white">Server-Side Rendering</h3>
+                    <p class="text-gray-300 text-sm leading-relaxed">
+                        Angular SSR with Express.js for faster initial load, SEO optimization, and improved performance.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
