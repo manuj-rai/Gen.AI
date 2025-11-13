@@ -1,5 +1,6 @@
+/* Typing animation */
 .typing-dots .dot {
-  animation: blink 1s infinite;
+  animation: blink 1.4s infinite;
 }
 .typing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
@@ -7,4 +8,39 @@
 @keyframes blink {
   0%, 100% { opacity: 0.2; }
   50% { opacity: 1; }
+}
+
+/* Fade in animation for messages */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.7);
 }

@@ -9,11 +9,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatService } from '../services/chat.service';
 import { trigger, transition, style, animate } from '@angular/animations';
+import { LucideAngularModule, MessageCircle, X, Send, Trash2, Sparkles } from 'lucide-angular';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideAngularModule],
   animations: [
     trigger('chatSlide', [
       transition(':enter', [
@@ -37,6 +38,13 @@ export class ChatComponent implements OnInit, AfterViewInit {
   messages: { user: 'User' | 'AI'; text: string; timestamp?: Date }[] = [];
 
   @ViewChild('messageContainer') messageContainer!: ElementRef;
+
+  // Lucide icons
+  readonly MessageCircle = MessageCircle;
+  readonly X = X;
+  readonly Send = Send;
+  readonly Trash2 = Trash2;
+  readonly Sparkles = Sparkles;
 
   constructor(private chatService: ChatService) {}
 
