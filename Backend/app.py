@@ -11,6 +11,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain.retrievers import EnsembleRetriever
+from langchain.prompts import PromptTemplate
 
 from web_loader import fetch_clean_text_from_url
 
@@ -21,6 +22,7 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PDF_PATH = os.path.join(os.path.dirname(__file__), os.getenv("PDF_PATH", "Manuj Rai.pdf"))
 SOURCE_URL = os.getenv("SOURCE_URL")
+INSTRUCTIONS_PATH = os.path.join(os.path.dirname(__file__), "instructions.txt")
 
 # ------------------------------------------------------------------
 # Flask app setup
@@ -35,10 +37,27 @@ DEFAULT_MODEL = "gpt-3.5-turbo"                        # Default OpenAI model
 ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]  # Supported model list
 
 # ------------------------------------------------------------------
-# Global vectorstores for each content source
+# Global vectorstores for each content source and system instructions
 # ------------------------------------------------------------------
 pdf_vectorstore = None
 web_vectorstore = None
+system_instructions = ""
+
+# ------------------------------------------------------------------
+# Load system instructions for HR Policy Assistant
+# ------------------------------------------------------------------
+def load_system_instructions():
+    global system_instructions
+    try:
+        with open(INSTRUCTIONS_PATH, 'r', encoding='utf-8') as f:
+            system_instructions = f.read()
+        print("✅ System instructions loaded successfully.")
+    except FileNotFoundError:
+        print(f"⚠️ Instructions file not found at {INSTRUCTIONS_PATH}. Using default behavior.")
+        system_instructions = "You are a helpful HR Policy Assistant. Provide clear, accurate, and friendly answers about company policies and procedures."
+    except Exception as e:
+        print(f"⚠️ Error loading instructions: {e}")
+        system_instructions = "You are a helpful HR Policy Assistant. Provide clear, accurate, and friendly answers about company policies and procedures."
 
 # ------------------------------------------------------------------
 # Load and extract text from a PDF file
@@ -98,7 +117,7 @@ def preload_website_data():
         print("⚠️ Website returned no usable content.")
 
 # ------------------------------------------------------------------
-# Build a RetrievalQA chain using one or both sources
+# Build a RetrievalQA chain using one or both sources with custom prompt
 # ------------------------------------------------------------------
 def create_fallback_qa_chain(model_name):
     # Prefer both sources if available
@@ -126,11 +145,32 @@ def create_fallback_qa_chain(model_name):
     else:
         raise RuntimeError("❌ No sources available for answering.")
 
-    # Build the QA chain with the chosen retriever
+    # Create custom prompt template with HR instructions
+    prompt_template = f"""{system_instructions}
+
+---
+
+## Context Information:
+{{context}}
+
+---
+
+## Employee Question:
+{{question}}
+
+## Your Response:
+Remember to be warm, supportive, and human-like in your answer. Use the context above to provide accurate information while following the conversation style guidelines."""
+
+    PROMPT = PromptTemplate(
+        template=prompt_template,
+        input_variables=["context", "question"]
+    )
+
+    # Build the QA chain with the chosen retriever and custom prompt
     return RetrievalQA.from_chain_type(
-        llm=ChatOpenAI(temperature=0, model_name=model_name),
+        llm=ChatOpenAI(temperature=0.3, model_name=model_name),  # Slightly higher temperature for more natural responses
         retriever=retriever,
-        chain_type_kwargs={"prompt": None},
+        chain_type_kwargs={"prompt": PROMPT},
         return_source_documents=True
     )
 
@@ -141,16 +181,27 @@ def create_fallback_qa_chain(model_name):
 
 @app.route("/")
 def home():
-    return "Sever is running live"
+    return jsonify({
+        "message": "HR Policy Assistant API is running",
+        "version": "2.0",
+        "description": "AI-powered HR assistant for company policies and employee support",
+        "endpoints": {
+            "/health": "Check system status",
+            "/ask": "POST - Ask HR policy questions"
+        }
+    })
 
 @app.route("/health")
 def health():
     return jsonify({
         "status": "ok",
-        "version": "1.1",
+        "service": "HR Policy Assistant",
+        "version": "2.0",
         "pdf_loaded": pdf_vectorstore is not None,
         "website_loaded": web_vectorstore is not None,
-        "source_url": SOURCE_URL
+        "instructions_loaded": len(system_instructions) > 0,
+        "source_url": SOURCE_URL,
+        "ready": pdf_vectorstore is not None or web_vectorstore is not None
     })
 
 @app.route("/ask", methods=["POST"])
@@ -183,7 +234,10 @@ def ask():
 # ------------------------------------------------------------------
 # Run preload logic immediately on import (for Gunicorn compatibility)
 # ------------------------------------------------------------------
-print("🚀 App is starting... loading sources.")
+print("🚀 HR Policy Assistant is starting... loading sources.")
+
+# Load system instructions first
+load_system_instructions()
 
 try:
     preload_pdf_data()
@@ -195,7 +249,9 @@ try:
     preload_website_data()
     print("✅ Finished loading website.")
 except Exception as e:
-    print(f"⚠️ Website load failed: {e}")    
+    print(f"⚠️ Website load failed: {e}")
+
+print("✅ HR Policy Assistant is ready to help employees!")    
 
 # # ------------------------------------------------------------------
 # # Start the app and preload sources

@@ -87,7 +87,7 @@ export class ChatComponent implements OnInit, AfterViewInit {
         this.messages.pop();
         this.messages.push({
           user: 'AI',
-          text: '👋 Welcome! How can I assist you today?',
+          text: 'Hi there! 👋 I\'m your HR Policy Assistant. I\'m here to help answer questions about company policies, benefits, leave, and more. What can I help you with today?',
           timestamp: new Date()
         });
         this.saveChatHistory();

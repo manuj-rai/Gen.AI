@@ -1,6 +1,6 @@
 import { Component, ViewChild, AfterViewInit } from '@angular/core';
 import { ChatComponent } from './chat/chat.component';
-import { LucideAngularModule, MessageSquare, Zap, Settings, Moon, Brain, Database, FileText, Link, Lock } from 'lucide-angular';
+import { LucideAngularModule, MessageSquare, Zap, Settings, Moon, Brain, Database, FileText, Link, Lock, Sparkles } from 'lucide-angular';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +22,7 @@ export class AppComponent implements AfterViewInit {
   readonly FileText = FileText;
   readonly Link = Link;
   readonly Lock = Lock;
+  readonly Sparkles = Sparkles;
 
   ngAfterViewInit() {
     setTimeout(() => {}, 0);
