@@ -13,7 +13,7 @@ tiktoken==0.5.1
 
 # LangChain ecosystem (PERFECTLY MATCHED VERSIONS)
 langchain==0.2.17
-langchain-core==0.2.36
+langchain-core==0.2.43
 langchain-community==0.2.19
 langchain-openai==0.1.7
 langchain-text-splitters==0.2.2
