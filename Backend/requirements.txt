@@ -17,6 +17,9 @@ langchain-community>=0.0.17
 langchain-openai>=0.0.5       
 faiss-cpu>=1.7.4             
 
+langchain-text-splitters
+langchain-core
+
 # Web scraping support
 requests>=2.31.0
 beautifulsoup4>=4.12.2
