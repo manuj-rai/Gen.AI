@@ -5,15 +5,33 @@ import traceback
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 
+# ---------------- LangChain v0.1+ Correct Imports ---------------- #
+
+# text splitter
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings
+
+# embeddings
+from langchain_openai import OpenAIEmbeddings
+
+# vector store
 from langchain_community.vectorstores import FAISS
-from langchain_community.chat_models import ChatOpenAI
-from langchain.chains import RetrievalQA
-from langchain.retrievers import EnsembleRetriever
+
+# chat model
+from langchain_openai import ChatOpenAI
+
+# RetrievalQA chain
+from langchain_community.chains import RetrievalQA
+
+# retrievers
+from langchain_community.retrievers import EnsembleRetriever
+
+# prompt template
 from langchain.prompts import PromptTemplate
 
+# --------------------------------------------------------------- #
+
 from web_loader import fetch_clean_text_from_url
+
 
 # ------------------------------------------------------------------
 # Load environment variables from .env
