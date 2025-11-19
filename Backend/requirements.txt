@@ -1,28 +1,29 @@
 # Core dependencies
-Flask>=2.2.0
-flask-cors>=3.0.10
-gunicorn>=20.1.0
-python-dotenv>=1.0.0
+Flask==2.2.5
+flask-cors==3.0.10
+gunicorn==20.1.0
+python-dotenv==1.0.0
 
 # PDF handling
-PyPDF2>=3.0.1
+PyPDF2==3.0.1
 
-# OpenAI & embeddings
-openai>=1.3.8
-tiktoken>=0.5.1  # required for token counting by OpenAI API
+# OpenAI SDK
+openai==1.3.8
+tiktoken==0.5.1
 
-# LangChain & vector DB
-langchain>=0.1.17
-langchain-community>=0.0.17
-langchain-openai>=0.0.5       
-faiss-cpu>=1.7.4             
+# LangChain ecosystem (PINNED VERSIONS)
+langchain-core==0.1.52
+langchain-text-splitters==0.0.1
+langchain==0.1.17
+langchain-community==0.0.17
+langchain-openai==0.0.5
 
-langchain-text-splitters
-langchain-core
+# Vector DB
+faiss-cpu==1.7.4
 
-# Web scraping support
-requests>=2.31.0
-beautifulsoup4>=4.12.2
+# Web scraping
+requests==2.31.0
+beautifulsoup4==4.12.2
 
-# Optional utility (for CLI prints, not strictly required)
-colorama>=0.4.6
+# Utilities
+colorama==0.4.6
