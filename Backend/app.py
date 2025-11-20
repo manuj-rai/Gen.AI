@@ -2,10 +2,11 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import traceback
+import threading
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.chat_models import ChatOpenAI
@@ -15,7 +16,7 @@ from langchain.retrievers import EnsembleRetriever
 from web_loader import fetch_clean_text_from_url
 
 # ------------------------------------------------------------------
-# Load environment variables from .env
+# Load environment variables
 # ------------------------------------------------------------------
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -28,20 +29,20 @@ SOURCE_URL = os.getenv("SOURCE_URL")
 app = Flask(__name__)
 CORS(app)
 
-# ------------------------------------------------------------------
-# Configuration constants
-# ------------------------------------------------------------------
-DEFAULT_MODEL = "gpt-3.5-turbo"                        # Default OpenAI model
-ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]  # Supported model list
+DEFAULT_MODEL = "gpt-3.5-turbo"
+ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]
 
 # ------------------------------------------------------------------
-# Global vectorstores for each content source
+# Global Vectorstores
 # ------------------------------------------------------------------
 pdf_vectorstore = None
 web_vectorstore = None
 
+pdf_loaded = False
+web_loaded = False
+
 # ------------------------------------------------------------------
-# Load and extract text from a PDF file
+# PDF Loader
 # ------------------------------------------------------------------
 def load_pdf_text(pdf_path):
     try:
@@ -56,8 +57,39 @@ def load_pdf_text(pdf_path):
         print(f"❌ Error loading PDF: {e}")
         return ""
 
+def async_load_pdf():
+    global pdf_vectorstore, pdf_loaded
+    try:
+        print(f"📄 Background: loading PDF {PDF_PATH}")
+        text = load_pdf_text(PDF_PATH)
+        if text:
+            pdf_vectorstore = build_vector_store(text)
+            pdf_loaded = True
+            print("✅ PDF indexed (background).")
+        else:
+            print("⚠️ PDF loaded but empty.")
+    except Exception as e:
+        print(f"❌ PDF load failed: {e}")
+
 # ------------------------------------------------------------------
-# Build a vectorstore from raw text using LangChain + FAISS
+# Website Loader
+# ------------------------------------------------------------------
+def async_load_website():
+    global web_vectorstore, web_loaded
+    try:
+        print(f"🌐 Background: fetching {SOURCE_URL}")
+        text = fetch_clean_text_from_url(SOURCE_URL)
+        if text:
+            web_vectorstore = build_vector_store(text)
+            web_loaded = True
+            print("✅ Website indexed (background).")
+        else:
+            print("⚠️ No usable website content.")
+    except Exception as e:
+        print(f"❌ Website load failed: {e}")
+
+# ------------------------------------------------------------------
+# Build Vectorstore
 # ------------------------------------------------------------------
 def build_vector_store(text):
     splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
@@ -66,95 +98,54 @@ def build_vector_store(text):
     return FAISS.from_texts(chunks, embedding=embeddings)
 
 # ------------------------------------------------------------------
-# Load PDF and build vectorstore (if successful)
-# ------------------------------------------------------------------
-def preload_pdf_data():
-    global pdf_vectorstore
-    print(f"📄 Attempting to load PDF at: {PDF_PATH}")
-
-    try:
-        text = load_pdf_text(PDF_PATH)
-        if text:
-            pdf_vectorstore = build_vector_store(text)
-            print("✅ PDF indexed.")
-        else:
-            print("⚠️ PDF loaded but has no extractable text.")
-    except FileNotFoundError:
-        print(f"❌ PDF file not found: {PDF_PATH}")
-    except Exception as e:
-        print(f"❌ Error reading PDF: {e}")
-
-# ------------------------------------------------------------------
-# Load website content and build vectorstore (if successful)
-# ------------------------------------------------------------------
-def preload_website_data():
-    global web_vectorstore
-    print(f"🌐 Fetching from: {SOURCE_URL}")
-    text = fetch_clean_text_from_url(SOURCE_URL)
-    if text:
-        web_vectorstore = build_vector_store(text)
-        print("✅ Website indexed.")
-    else:
-        print("⚠️ Website returned no usable content.")
-
-# ------------------------------------------------------------------
-# Build a RetrievalQA chain using one or both sources
+# Combined Retrieval
 # ------------------------------------------------------------------
 def create_fallback_qa_chain(model_name):
-    # Prefer both sources if available
     if pdf_vectorstore and web_vectorstore:
-        print("✅ Using both PDF and Website sources.")
         retriever = EnsembleRetriever(
             retrievers=[
                 pdf_vectorstore.as_retriever(search_type="similarity", k=3),
                 web_vectorstore.as_retriever(search_type="similarity", k=3)
-            ],
+            ], 
             weights=[1.0, 1.0]
         )
-
-    # Use only PDF if website failed
     elif pdf_vectorstore:
-        print("⚠️ Website unavailable. Using PDF only.")
         retriever = pdf_vectorstore.as_retriever(search_type="similarity", k=3)
-
-    # Use only Website if PDF failed
     elif web_vectorstore:
-        print("⚠️ PDF unavailable. Using Website only.")
         retriever = web_vectorstore.as_retriever(search_type="similarity", k=3)
-
-    # Fail if both are unavailable
     else:
-        raise RuntimeError("❌ No sources available for answering.")
+        raise RuntimeError("❌ No sources indexed yet.")
 
-    # Build the QA chain with the chosen retriever
     return RetrievalQA.from_chain_type(
         llm=ChatOpenAI(temperature=0, model_name=model_name),
         retriever=retriever,
-        chain_type_kwargs={"prompt": None},
         return_source_documents=True
     )
-
 
 # ------------------------------------------------------------------
 # Routes
 # ------------------------------------------------------------------
-
 @app.route("/")
 def home():
-    return "Sever is running live"
+    return "Server is running live"
+
+@app.route("/ping")
+def ping():
+    return "pong", 200
 
 @app.route("/health")
 def health():
     return jsonify({
         "status": "ok",
-        "version": "1.1",
-        "pdf_loaded": pdf_vectorstore is not None,
-        "website_loaded": web_vectorstore is not None,
+        "pdf_loaded": pdf_loaded,
+        "website_loaded": web_loaded,
         "source_url": SOURCE_URL
     })
 
 @app.route("/ask", methods=["POST"])
 def ask():
+    global pdf_loaded, web_loaded
+
     try:
         data = request.get_json()
         prompt = data.get("prompt", "").strip()
@@ -166,11 +157,19 @@ def ask():
         if model not in ALLOWED_MODELS:
             return jsonify({"error": f"Invalid model: {model}"}), 400
 
-        # Create QA chain based on available sources
+        # Lazy loading
+        if not pdf_loaded:
+            threading.Thread(target=async_load_pdf, daemon=True).start()
+
+        if not web_loaded:
+            threading.Thread(target=async_load_website, daemon=True).start()
+
+        if not (pdf_vectorstore or web_vectorstore):
+            return jsonify({"message": "Data is still indexing... try again shortly."})
+
         qa_chain = create_fallback_qa_chain(model)
         result = qa_chain(prompt)
 
-        # Prepare response with answer and snippet sources
         return jsonify({
             "response": result["result"],
             "sources": [doc.page_content[:200] for doc in result["source_documents"]]
@@ -179,39 +178,11 @@ def ask():
     except Exception as e:
         print("❌ Exception:", traceback.format_exc())
         return jsonify({"error": str(e)}), 500
-    
+
 # ------------------------------------------------------------------
-# Run preload logic immediately on import (for Gunicorn compatibility)
+# Background loading at startup (non-blocking)
 # ------------------------------------------------------------------
-print("🚀 App is starting... loading sources.")
+threading.Thread(target=async_load_pdf, daemon=True).start()
+threading.Thread(target=async_load_website, daemon=True).start()
 
-try:
-    preload_pdf_data()
-    print("✅ Finished loading PDF.")
-except Exception as e:
-    print(f"⚠️ PDF load failed: {e}")
-
-try:
-    preload_website_data()
-    print("✅ Finished loading website.")
-except Exception as e:
-    print(f"⚠️ Website load failed: {e}")    
-
-# # ------------------------------------------------------------------
-# # Start the app and preload sources
-# # ------------------------------------------------------------------
-# if __name__ == "__main__":
-#     print("🚀 App is starting... loading sources.")
-#     try:
-#         preload_pdf_data()
-#         print("✅ Finished loading PDF.")
-#     except Exception as e:
-#         print(f"⚠️ PDF load failed: {e}")
-
-#     try:
-#         preload_website_data()
-#         print("✅ Finished loading website.")
-#     except Exception as e:
-#         print(f"⚠️ Website load failed: {e}")
-
-#     app.run(debug=True, host="0.0.0.0", port=5000)
+print("🚀 App started instantly — background indexing running.")
