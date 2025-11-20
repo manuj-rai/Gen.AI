@@ -1,11 +1,16 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+# Backend/app.py
 import os
 import traceback
 import threading
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 
+# LangChain / RAG imports
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -15,123 +20,171 @@ from langchain.retrievers import EnsembleRetriever
 
 from web_loader import fetch_clean_text_from_url
 
-# ------------------------------------------------------------------
-# Load environment variables
-# ------------------------------------------------------------------
+# =========================================================
+# ENV & CONFIG
+# =========================================================
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-PDF_PATH = os.path.join(os.path.dirname(__file__), os.getenv("PDF_PATH", "Manuj Rai.pdf"))
-SOURCE_URL = os.getenv("SOURCE_URL")
 
-# ------------------------------------------------------------------
-# Flask app setup
-# ------------------------------------------------------------------
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+PDF_PATH = os.getenv("PDF_PATH", "Manuj Rai.pdf")
+SOURCE_URL = os.getenv("SOURCE_URL", "https://manuj-rai.vercel.app/")
+
+# Chunking settings
+CHUNK_SIZE = 500
+CHUNK_OVERLAP = 50
+TOP_K = 3
+
+DEFAULT_MODEL = "gpt-3.5-turbo"
+ALLOWED_MODELS = {"gpt-3.5-turbo", "gpt-4", "gpt-4o"}
+
+# Vectorstore save path
+ROOT_DIR = Path(os.path.dirname(__file__))
+VECTOR_DIR = ROOT_DIR / "vectorstores"
+VECTOR_DIR.mkdir(parents=True, exist_ok=True)
+
+# =========================================================
+# FLASK APP
+# =========================================================
 app = Flask(__name__)
 CORS(app)
 
-DEFAULT_MODEL = "gpt-3.5-turbo"
-ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]
-
-# ------------------------------------------------------------------
-# Global Vectorstores
-# ------------------------------------------------------------------
+# =========================================================
+# GLOBAL STATE
+# =========================================================
 pdf_vectorstore = None
 web_vectorstore = None
 
 pdf_loaded = False
 web_loaded = False
 
-# ------------------------------------------------------------------
-# PDF Loader
-# ------------------------------------------------------------------
-def load_pdf_text(pdf_path):
+pdf_lock = threading.RLock()
+web_lock = threading.RLock()
+
+executor = ThreadPoolExecutor(max_workers=2)
+
+# =========================================================
+# HELPERS
+# =========================================================
+def load_pdf_text(path):
     try:
-        reader = PdfReader(pdf_path)
+        reader = PdfReader(path)
         text = ""
         for page in reader.pages:
-            content = page.extract_text()
-            if content:
-                text += content + "\n"
+            c = page.extract_text()
+            if c:
+                text += c + "\n"
         return text.strip()
     except Exception as e:
-        print(f"❌ Error loading PDF: {e}")
+        app.logger.error(f"PDF read error: {e}")
         return ""
 
-def async_load_pdf():
-    global pdf_vectorstore, pdf_loaded
-    try:
-        print(f"📄 Background: loading PDF {PDF_PATH}")
-        text = load_pdf_text(PDF_PATH)
-        if text:
-            pdf_vectorstore = build_vector_store(text)
-            pdf_loaded = True
-            print("✅ PDF indexed (background).")
-        else:
-            print("⚠️ PDF loaded but empty.")
-    except Exception as e:
-        print(f"❌ PDF load failed: {e}")
-
-# ------------------------------------------------------------------
-# Website Loader
-# ------------------------------------------------------------------
-def async_load_website():
-    global web_vectorstore, web_loaded
-    try:
-        print(f"🌐 Background: fetching {SOURCE_URL}")
-        text = fetch_clean_text_from_url(SOURCE_URL)
-        if text:
-            web_vectorstore = build_vector_store(text)
-            web_loaded = True
-            print("✅ Website indexed (background).")
-        else:
-            print("⚠️ No usable website content.")
-    except Exception as e:
-        print(f"❌ Website load failed: {e}")
-
-# ------------------------------------------------------------------
-# Build Vectorstore
-# ------------------------------------------------------------------
-def build_vector_store(text):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+def build_vectorstore(text, source_tag):
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=CHUNK_SIZE,
+        chunk_overlap=CHUNK_OVERLAP
+    )
     chunks = splitter.split_text(text)
-    embeddings = OpenAIEmbeddings()
-    return FAISS.from_texts(chunks, embedding=embeddings)
+    metadata = [{"source": source_tag, "chunk": i} for i in range(len(chunks))]
 
-# ------------------------------------------------------------------
-# Combined Retrieval
-# ------------------------------------------------------------------
-def create_fallback_qa_chain(model_name):
+    embeddings = OpenAIEmbeddings()
+    vs = FAISS.from_texts(chunks, embedding=embeddings, metadatas=metadata)
+    return vs
+
+def save_vectorstore(vs, name):
+    try:
+        path = VECTOR_DIR / name
+        path.mkdir(parents=True, exist_ok=True)
+        vs.save_local(str(path))
+        app.logger.info(f"Saved vectorstore: {name}")
+    except Exception as e:
+        app.logger.warning(f"Could not save vectorstore '{name}': {e}")
+
+def load_vectorstore(name):
+    try:
+        path = VECTOR_DIR / name
+        if path.exists():
+            return FAISS.load_local(str(path), OpenAIEmbeddings())
+        return None
+    except Exception:
+        return None
+
+# =========================================================
+# INDEXING HANDLERS
+# =========================================================
+def index_pdf(force=False):
+    global pdf_vectorstore, pdf_loaded
+    with pdf_lock:
+        if pdf_loaded and not force:
+            return
+
+        app.logger.info("Indexing PDF...")
+        text = load_pdf_text(str(ROOT_DIR / PDF_PATH))
+        if not text:
+            app.logger.warning("PDF empty or unreadable")
+            return
+
+        pdf_vectorstore = build_vectorstore(text, "resume")
+        pdf_loaded = True
+        save_vectorstore(pdf_vectorstore, "pdf")
+
+def index_website(force=False):
+    global web_vectorstore, web_loaded
+    with web_lock:
+        if web_loaded and not force:
+            return
+
+        app.logger.info(f"Fetching website: {SOURCE_URL}")
+        text = fetch_clean_text_from_url(SOURCE_URL)
+        if not text:
+            app.logger.warning("Website content empty")
+            return
+
+        web_vectorstore = build_vectorstore(text, SOURCE_URL)
+        web_loaded = True
+        save_vectorstore(web_vectorstore, "website")
+
+def create_retriever(model_name):
     if pdf_vectorstore and web_vectorstore:
-        retriever = EnsembleRetriever(
+        return EnsembleRetriever(
             retrievers=[
-                pdf_vectorstore.as_retriever(search_type="similarity", k=3),
-                web_vectorstore.as_retriever(search_type="similarity", k=3)
-            ], 
+                pdf_vectorstore.as_retriever(search_type="similarity", k=TOP_K),
+                web_vectorstore.as_retriever(search_type="similarity", k=TOP_K)
+            ],
             weights=[1.0, 1.0]
         )
     elif pdf_vectorstore:
-        retriever = pdf_vectorstore.as_retriever(search_type="similarity", k=3)
+        return pdf_vectorstore.as_retriever(search_type="similarity", k=TOP_K)
     elif web_vectorstore:
-        retriever = web_vectorstore.as_retriever(search_type="similarity", k=3)
+        return web_vectorstore.as_retriever(search_type="similarity", k=TOP_K)
     else:
-        raise RuntimeError("❌ No sources indexed yet.")
+        raise RuntimeError("No sources indexed")
 
-    return RetrievalQA.from_chain_type(
-        llm=ChatOpenAI(temperature=0, model_name=model_name),
-        retriever=retriever,
-        return_source_documents=True
-    )
+# =========================================================
+# STARTUP LOAD (Persistent)
+# =========================================================
+loaded_pdf = load_vectorstore("pdf")
+if loaded_pdf:
+    pdf_vectorstore = loaded_pdf
+    pdf_loaded = True
 
-# ------------------------------------------------------------------
-# Routes
-# ------------------------------------------------------------------
+loaded_web = load_vectorstore("website")
+if loaded_web:
+    web_vectorstore = loaded_web
+    web_loaded = True
+
+# If nothing exists → Auto-index
+if not pdf_loaded:
+    executor.submit(index_pdf)
+
+if not web_loaded:
+    executor.submit(index_website)
+
+# =========================================================
+# ROUTES
+# =========================================================
 @app.route("/")
 def home():
-    return "Server is running live"
-
-@app.route("/ping")
-def ping():
-    return "pong", 200
+    return "AI Backend Running"
 
 @app.route("/health")
 def health():
@@ -142,47 +195,61 @@ def health():
         "source_url": SOURCE_URL
     })
 
+@app.route("/reindex", methods=["POST"])
+def reindex():
+    body = request.get_json() or {}
+    target = body.get("target", "both")
+
+    if target in ("pdf", "both"):
+        executor.submit(index_pdf, True)
+    if target in ("website", "both"):
+        executor.submit(index_website, True)
+
+    return jsonify({"message": "Reindex started", "target": target})
+
 @app.route("/ask", methods=["POST"])
 def ask():
-    global pdf_loaded, web_loaded
-
     try:
-        data = request.get_json()
-        prompt = data.get("prompt", "").strip()
+        data = request.get_json() or {}
+        prompt = (data.get("prompt") or "").strip()
         model = data.get("model", DEFAULT_MODEL)
 
         if not prompt:
-            return jsonify({"error": "Prompt is required"}), 400
-
+            return jsonify({"error": "prompt is required"}), 400
         if model not in ALLOWED_MODELS:
-            return jsonify({"error": f"Invalid model: {model}"}), 400
+            return jsonify({"error": f"invalid model {model}"}), 400
 
-        # Lazy loading
-        if not pdf_loaded:
-            threading.Thread(target=async_load_pdf, daemon=True).start()
+        if not (pdf_loaded or web_loaded):
+            return jsonify({"message": "Indexing... try again soon"}), 202
 
-        if not web_loaded:
-            threading.Thread(target=async_load_website, daemon=True).start()
+        retriever = create_retriever(model)
+        qa_chain = RetrievalQA.from_chain_type(
+            llm=ChatOpenAI(model_name=model, temperature=0),
+            retriever=retriever,
+            return_source_documents=True
+        )
 
-        if not (pdf_vectorstore or web_vectorstore):
-            return jsonify({"message": "Data is still indexing... try again shortly."})
-
-        qa_chain = create_fallback_qa_chain(model)
         result = qa_chain(prompt)
+        answer = result["result"]
+        sources = []
 
-        return jsonify({
-            "response": result["result"],
-            "sources": [doc.page_content[:200] for doc in result["source_documents"]]
-        })
+        for doc in result["source_documents"]:
+            sources.append({
+                "snippet": doc.page_content[:400],
+                "metadata": doc.metadata
+            })
+
+        return jsonify({"response": answer, "sources": sources})
 
     except Exception as e:
-        print("❌ Exception:", traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
+        app.logger.error(traceback.format_exc())
+        return jsonify({
+            "error": "internal_server_error",
+            "detail": str(e)
+        }), 500
 
-# ------------------------------------------------------------------
-# Background loading at startup (non-blocking)
-# ------------------------------------------------------------------
-threading.Thread(target=async_load_pdf, daemon=True).start()
-threading.Thread(target=async_load_website, daemon=True).start()
-
-print("🚀 App started instantly — background indexing running.")
+# =========================================================
+# MAIN (local debug)
+# =========================================================
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
