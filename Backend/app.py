@@ -10,13 +10,13 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 
-# LangChain / RAG imports
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain.retrievers import EnsembleRetriever
+from langchain.prompts.chat import ChatPromptTemplate
 
 from web_loader import fetch_clean_text_from_url
 
@@ -29,17 +29,15 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PDF_PATH = os.getenv("PDF_PATH", "Manuj Rai.pdf")
 SOURCE_URL = os.getenv("SOURCE_URL", "https://manuj-rai.vercel.app/")
 
-# Chunking settings
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
 TOP_K = 3
-
 DEFAULT_MODEL = "gpt-3.5-turbo"
 ALLOWED_MODELS = {"gpt-3.5-turbo", "gpt-4", "gpt-4o"}
 
-# Vectorstore save path
 ROOT_DIR = Path(os.path.dirname(__file__))
 VECTOR_DIR = ROOT_DIR / "vectorstores"
+INSTRUCTION_PATH = ROOT_DIR / "instructions.txt"
 VECTOR_DIR.mkdir(parents=True, exist_ok=True)
 
 # =========================================================
@@ -53,14 +51,21 @@ CORS(app)
 # =========================================================
 pdf_vectorstore = None
 web_vectorstore = None
-
 pdf_loaded = False
 web_loaded = False
 
 pdf_lock = threading.RLock()
 web_lock = threading.RLock()
-
 executor = ThreadPoolExecutor(max_workers=2)
+
+def load_system_prompt():
+    try:
+        return (INSTRUCTION_PATH.read_text(encoding="utf-8")).strip()
+    except Exception as e:
+        app.logger.warning(f"⚠️ Could not load system prompt: {e}")
+        return "You are a helpful assistant that only answers from the resume and website."
+
+system_prompt = load_system_prompt()
 
 # =========================================================
 # HELPERS
@@ -79,16 +84,11 @@ def load_pdf_text(path):
         return ""
 
 def build_vectorstore(text, source_tag):
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=CHUNK_SIZE,
-        chunk_overlap=CHUNK_OVERLAP
-    )
+    splitter = RecursiveCharacterTextSplitter(chunk_size=CHUNK_SIZE, chunk_overlap=CHUNK_OVERLAP)
     chunks = splitter.split_text(text)
     metadata = [{"source": source_tag, "chunk": i} for i in range(len(chunks))]
-
     embeddings = OpenAIEmbeddings()
-    vs = FAISS.from_texts(chunks, embedding=embeddings, metadatas=metadata)
-    return vs
+    return FAISS.from_texts(chunks, embedding=embeddings, metadatas=metadata)
 
 def save_vectorstore(vs, name):
     try:
@@ -118,13 +118,11 @@ def index_pdf(force=False):
         if pdf_loaded and not force:
             app.logger.debug("PDF already loaded, skipping index_pdf.")
             return
-
         app.logger.info("Indexing PDF...")
         text = load_pdf_text(str(ROOT_DIR / PDF_PATH))
         if not text:
             app.logger.warning("PDF empty or unreadable")
             return
-
         try:
             pdf_vectorstore = build_vectorstore(text, "resume")
             pdf_loaded = True
@@ -140,18 +138,15 @@ def index_website(force=False):
         if web_loaded and not force:
             app.logger.debug("Website already loaded, skipping index_website.")
             return
-
         app.logger.info(f"Fetching website: {SOURCE_URL}")
         try:
             text = fetch_clean_text_from_url(SOURCE_URL)
         except Exception as e:
             app.logger.error(f"Error fetching website: {e}")
             text = ""
-
         if not text:
             app.logger.warning("Website content empty")
             return
-
         try:
             web_vectorstore = build_vectorstore(text, SOURCE_URL)
             web_loaded = True
@@ -192,23 +187,16 @@ if loaded_web:
     web_loaded = True
     app.logger.info("Loaded website vectorstore from disk.")
 
-# If nothing exists → Auto-index synchronously (load earlier)
 try:
     if not pdf_loaded:
         app.logger.info("No saved PDF vectorstore found — indexing PDF synchronously at startup.")
         index_pdf(force=False)
-    else:
-        app.logger.info("PDF already loaded; skipping synchronous indexing.")
-
     if not web_loaded:
         app.logger.info("No saved website vectorstore found — indexing website synchronously at startup.")
         index_website(force=False)
-    else:
-        app.logger.info("Website already loaded; skipping synchronous indexing.")
 except Exception as e:
     app.logger.error(f"Startup indexing failed: {e}\n{traceback.format_exc()}")
 
-# Keep executor for reindex endpoint and other background tasks
 # =========================================================
 # ROUTES
 # =========================================================
@@ -231,7 +219,6 @@ def reindex():
     target = body.get("target", "both")
 
     if target in ("pdf", "both"):
-        # background reindex
         executor.submit(index_pdf, True)
     if target in ("website", "both"):
         executor.submit(index_website, True)
@@ -249,7 +236,6 @@ def ask():
             return jsonify({"error": "prompt is required"}), 400
         if model not in ALLOWED_MODELS:
             return jsonify({"error": f"invalid model {model}"}), 400
-
         if not (pdf_loaded or web_loaded):
             return jsonify({"message": "Indexing... try again soon"}), 202
 
@@ -257,18 +243,18 @@ def ask():
         qa_chain = RetrievalQA.from_chain_type(
             llm=ChatOpenAI(model_name=model, temperature=0),
             retriever=retriever,
-            return_source_documents=True
+            return_source_documents=True,
+            chain_type_kwargs={
+                "prompt": ChatPromptTemplate.from_messages([
+                    ("system", system_prompt),
+                    ("human", "{question}")
+                ])
+            }
         )
 
         result = qa_chain(prompt)
         answer = result["result"]
-        sources = []
-
-        for doc in result["source_documents"]:
-            sources.append({
-                "snippet": doc.page_content[:400],
-                "metadata": doc.metadata
-            })
+        sources = [{"snippet": doc.page_content[:400], "metadata": doc.metadata} for doc in result["source_documents"]]
 
         return jsonify({"response": answer, "sources": sources})
 
