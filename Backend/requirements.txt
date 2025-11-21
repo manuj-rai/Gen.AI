@@ -1,3 +1,4 @@
+# Flask Setup
 Flask==3.0.3
 flask-cors==4.0.0
 python-dotenv==1.0.1
@@ -6,17 +7,17 @@ gunicorn==22.0.0
 # PDF
 PyPDF2==3.0.1
 
-# LangChain ecosystem (stable + compatible)
-langchain==0.1.22
+# LangChain + ecosystem (confirmed compatibility)
+langchain==0.0.339
 langchain-community==0.0.28
 langchain-openai==0.1.2
 langchain-text-splitters==0.0.1
 
-# OpenAI + vectorstore
+# OpenAI + FAISS
 openai==1.50.2
 faiss-cpu==1.7.4
 
-# Scraping
+# Web scraping
 requests==2.32.3
 beautifulsoup4==4.12.3
 lxml==5.2.1
