@@ -3,23 +3,20 @@ flask-cors==4.0.0
 python-dotenv==1.0.1
 gunicorn==22.0.0
 
-# PDF loader
+# PDF
 PyPDF2==3.0.1
 
-# LangChain ecosystem (versions must match)
-langchain==0.3.25
-langchain-community==0.3.24
-langchain-core==0.3.60
-langchain-text-splitters==0.3.8
-
-# OpenAI embeddings
-openai==1.50.2
+# LangChain ecosystem (stable + compatible)
+langchain==0.1.22
+langchain-community==0.0.28
 langchain-openai==0.1.2
+langchain-text-splitters==0.0.1
 
-# FAISS
+# OpenAI + vectorstore
+openai==1.50.2
 faiss-cpu==1.7.4
 
-# Web scraping
+# Scraping
 requests==2.32.3
 beautifulsoup4==4.12.3
 lxml==5.2.1
