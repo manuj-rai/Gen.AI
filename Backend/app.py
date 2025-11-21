@@ -105,7 +105,8 @@ def load_vectorstore(name):
         if path.exists():
             return FAISS.load_local(str(path), OpenAIEmbeddings())
         return None
-    except Exception:
+    except Exception as e:
+        app.logger.warning(f"Failed to load vectorstore '{name}': {e}")
         return None
 
 # =========================================================
@@ -115,6 +116,7 @@ def index_pdf(force=False):
     global pdf_vectorstore, pdf_loaded
     with pdf_lock:
         if pdf_loaded and not force:
+            app.logger.debug("PDF already loaded, skipping index_pdf.")
             return
 
         app.logger.info("Indexing PDF...")
@@ -123,25 +125,41 @@ def index_pdf(force=False):
             app.logger.warning("PDF empty or unreadable")
             return
 
-        pdf_vectorstore = build_vectorstore(text, "resume")
-        pdf_loaded = True
-        save_vectorstore(pdf_vectorstore, "pdf")
+        try:
+            pdf_vectorstore = build_vectorstore(text, "resume")
+            pdf_loaded = True
+            save_vectorstore(pdf_vectorstore, "pdf")
+            app.logger.info("PDF indexing complete.")
+        except Exception as e:
+            app.logger.error(f"Error building PDF vectorstore: {e}")
+            pdf_loaded = False
 
 def index_website(force=False):
     global web_vectorstore, web_loaded
     with web_lock:
         if web_loaded and not force:
+            app.logger.debug("Website already loaded, skipping index_website.")
             return
 
         app.logger.info(f"Fetching website: {SOURCE_URL}")
-        text = fetch_clean_text_from_url(SOURCE_URL)
+        try:
+            text = fetch_clean_text_from_url(SOURCE_URL)
+        except Exception as e:
+            app.logger.error(f"Error fetching website: {e}")
+            text = ""
+
         if not text:
             app.logger.warning("Website content empty")
             return
 
-        web_vectorstore = build_vectorstore(text, SOURCE_URL)
-        web_loaded = True
-        save_vectorstore(web_vectorstore, "website")
+        try:
+            web_vectorstore = build_vectorstore(text, SOURCE_URL)
+            web_loaded = True
+            save_vectorstore(web_vectorstore, "website")
+            app.logger.info("Website indexing complete.")
+        except Exception as e:
+            app.logger.error(f"Error building website vectorstore: {e}")
+            web_loaded = False
 
 def create_retriever(model_name):
     if pdf_vectorstore and web_vectorstore:
@@ -166,19 +184,31 @@ loaded_pdf = load_vectorstore("pdf")
 if loaded_pdf:
     pdf_vectorstore = loaded_pdf
     pdf_loaded = True
+    app.logger.info("Loaded PDF vectorstore from disk.")
 
 loaded_web = load_vectorstore("website")
 if loaded_web:
     web_vectorstore = loaded_web
     web_loaded = True
+    app.logger.info("Loaded website vectorstore from disk.")
 
-# If nothing exists → Auto-index
-if not pdf_loaded:
-    executor.submit(index_pdf)
+# If nothing exists → Auto-index synchronously (load earlier)
+try:
+    if not pdf_loaded:
+        app.logger.info("No saved PDF vectorstore found — indexing PDF synchronously at startup.")
+        index_pdf(force=False)
+    else:
+        app.logger.info("PDF already loaded; skipping synchronous indexing.")
 
-if not web_loaded:
-    executor.submit(index_website)
+    if not web_loaded:
+        app.logger.info("No saved website vectorstore found — indexing website synchronously at startup.")
+        index_website(force=False)
+    else:
+        app.logger.info("Website already loaded; skipping synchronous indexing.")
+except Exception as e:
+    app.logger.error(f"Startup indexing failed: {e}\n{traceback.format_exc()}")
 
+# Keep executor for reindex endpoint and other background tasks
 # =========================================================
 # ROUTES
 # =========================================================
@@ -201,6 +231,7 @@ def reindex():
     target = body.get("target", "both")
 
     if target in ("pdf", "both"):
+        # background reindex
         executor.submit(index_pdf, True)
     if target in ("website", "both"):
         executor.submit(index_website, True)
