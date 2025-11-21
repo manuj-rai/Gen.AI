@@ -7,9 +7,10 @@ gunicorn==22.0.0
 PyPDF2==3.0.1
 
 # LangChain ecosystem (versions must match)
-langchain==0.1.22
-langchain-community==0.0.28
-langchain-text-splitters==0.0.1
+langchain==0.3.25
+langchain-community==0.3.24
+langchain-core==0.3.60
+langchain-text-splitters==0.3.8
 
 # OpenAI embeddings
 openai==1.50.2
