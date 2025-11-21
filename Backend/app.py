@@ -1,4 +1,3 @@
-# Backend/app.py
 import os
 import traceback
 import threading
@@ -10,14 +9,17 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 
+# LangChain modules
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.chat_models import ChatOpenAI
+from langchain_community.retrievers import EnsembleRetriever
 from langchain.chains import RetrievalQA
-from langchain.retrievers import EnsembleRetriever
 from langchain.prompts.chat import ChatPromptTemplate
 
+# ✅ OpenAI components from separate module (not from langchain_community)
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+
+# Local module
 from web_loader import fetch_clean_text_from_url
 
 # =========================================================
