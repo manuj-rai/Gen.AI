@@ -6,8 +6,8 @@ gunicorn==22.0.0
 # PDF loader
 PyPDF2==3.0.1
 
-# LangChain ecosystem
-langchain==0.1.20
+# LangChain ecosystem (versions must match)
+langchain==0.1.22
 langchain-community==0.0.28
 langchain-text-splitters==0.0.1
 
@@ -17,7 +17,7 @@ openai==1.50.2
 # FAISS
 faiss-cpu==1.7.4
 
-# BeautifulSoup (web scraping)
+# Web scraping
 requests==2.32.3
 beautifulsoup4==4.12.3
 lxml==5.2.1
