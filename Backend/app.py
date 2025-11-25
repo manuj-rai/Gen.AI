@@ -11,8 +11,9 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain.retrievers import EnsembleRetriever
+from langchain.prompts import PromptTemplate
 
-from web_loader import fetch_clean_text_from_url
+from web_loader import get_all_pages_from_website
 
 # ------------------------------------------------------------------
 # Load environment variables from .env
@@ -21,6 +22,7 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 PDF_PATH = os.path.join(os.path.dirname(__file__), os.getenv("PDF_PATH", "Manuj Rai.pdf"))
 SOURCE_URL = os.getenv("SOURCE_URL")
+INSTRUCTIONS_PATH = os.path.join(os.path.dirname(__file__), "instructions.txt")
 
 # ------------------------------------------------------------------
 # Flask app setup
@@ -39,6 +41,7 @@ ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]  # Supported model list
 # ------------------------------------------------------------------
 pdf_vectorstore = None
 web_vectorstore = None
+system_instructions = None
 
 # ------------------------------------------------------------------
 # Load and extract text from a PDF file
@@ -55,6 +58,23 @@ def load_pdf_text(pdf_path):
     except Exception as e:
         print(f"❌ Error loading PDF: {e}")
         return ""
+
+# ------------------------------------------------------------------
+# Load system instructions from instructions.txt
+# ------------------------------------------------------------------
+def load_system_instructions():
+    global system_instructions
+    try:
+        if os.path.exists(INSTRUCTIONS_PATH):
+            with open(INSTRUCTIONS_PATH, "r", encoding="utf-8") as f:
+                system_instructions = f.read().strip()
+            print("✅ System instructions loaded.")
+        else:
+            print("⚠️ Instructions file not found. Using default behavior.")
+            system_instructions = "You are a helpful assistant that answers questions based on the provided context."
+    except Exception as e:
+        print(f"⚠️ Error loading instructions: {e}")
+        system_instructions = "You are a helpful assistant that answers questions based on the provided context."
 
 # ------------------------------------------------------------------
 # Build a vectorstore from raw text using LangChain + FAISS
@@ -86,14 +106,19 @@ def preload_pdf_data():
 
 # ------------------------------------------------------------------
 # Load website content and build vectorstore (if successful)
+# Scrapes all pages from the website domain
 # ------------------------------------------------------------------
 def preload_website_data():
     global web_vectorstore
-    print(f"🌐 Fetching from: {SOURCE_URL}")
-    text = fetch_clean_text_from_url(SOURCE_URL)
+    if not SOURCE_URL:
+        print("⚠️ SOURCE_URL not configured. Skipping website scraping.")
+        return
+    
+    print(f"🌐 Starting to crawl website: {SOURCE_URL}")
+    text = get_all_pages_from_website(SOURCE_URL, max_pages=50)
     if text:
         web_vectorstore = build_vector_store(text)
-        print("✅ Website indexed.")
+        print("✅ Website indexed (all pages).")
     else:
         print("⚠️ Website returned no usable content.")
 
@@ -126,11 +151,28 @@ def create_fallback_qa_chain(model_name):
     else:
         raise RuntimeError("❌ No sources available for answering.")
 
-    # Build the QA chain with the chosen retriever
+    # Create custom prompt with system instructions
+    prompt_template = f"""{system_instructions or "You are a helpful assistant."}
+
+Use the following pieces of context to answer the question. If you don't know the answer based on the context, just say that you don't have that information, don't try to make up an answer.
+
+Context: {{context}}
+
+Question: {{question}}
+
+Answer:"""
+
+    PROMPT = PromptTemplate(
+        template=prompt_template,
+        input_variables=["context", "question"]
+    )
+
+    # Build the QA chain with the chosen retriever and custom prompt
     return RetrievalQA.from_chain_type(
-        llm=ChatOpenAI(temperature=0, model_name=model_name),
+        llm=ChatOpenAI(temperature=0.7, model_name=model_name),
         retriever=retriever,
-        chain_type_kwargs={"prompt": None},
+        chain_type="stuff",
+        chain_type_kwargs={"prompt": PROMPT},
         return_source_documents=True
     )
 
@@ -141,7 +183,7 @@ def create_fallback_qa_chain(model_name):
 
 @app.route("/")
 def home():
-    return "Sever is running live"
+    return "Portfolio Q&A API is running live"
 
 @app.route("/health")
 def health():
@@ -184,6 +226,9 @@ def ask():
 # Run preload logic immediately on import (for Gunicorn compatibility)
 # ------------------------------------------------------------------
 print("🚀 App is starting... loading sources.")
+
+# Load system instructions first
+load_system_instructions()
 
 try:
     preload_pdf_data()
