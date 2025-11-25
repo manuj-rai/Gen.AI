@@ -184,7 +184,8 @@ def get_all_pages_from_website(base_url: str, max_pages: int = 50, use_js_render
     
     combined_text = "\n".join(all_text_content)
     print(f"✅ Crawled {len(visited_urls)} pages from {base_domain}")
-    print(f"📊 Total content lines: {sum(len(page.split('\\n')) for page in all_text_content)}")
+    total_lines = sum(len(page.split("\n")) for page in all_text_content)
+    print(f"📊 Total content lines: {total_lines}")
     return combined_text
 
 # Backward compatibility - single URL function
