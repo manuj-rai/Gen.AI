@@ -145,8 +145,7 @@ def preload_website_data():
     print(f"🌐 Starting to crawl website: {SOURCE_URL} (max_pages={MAX_WEB_PAGES})")
     text = get_all_pages_from_website(
         SOURCE_URL,
-        max_pages=MAX_WEB_PAGES,
-        use_js_rendering=USE_PLAYWRIGHT
+        max_pages=MAX_WEB_PAGES
     )
     if text:
         web_vectorstore = build_vector_store(text)
