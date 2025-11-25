@@ -1,14 +1,14 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
+import threading
 import traceback
 from dotenv import load_dotenv
 from PyPDF2 import PdfReader
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_community.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain.retrievers import EnsembleRetriever
 from langchain.prompts import PromptTemplate
@@ -35,6 +35,34 @@ CORS(app)
 # ------------------------------------------------------------------
 DEFAULT_MODEL = "gpt-3.5-turbo"                        # Default OpenAI model
 ALLOWED_MODELS = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]  # Supported model list
+
+
+def _env_flag(name: str, default: str = "false") -> bool:
+    """Return True if the env var represents an affirmative value."""
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "on")
+
+
+def _env_int(name: str, default: int) -> int:
+    """Parse an int env var safely."""
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+    try:
+        return int(raw_value)
+    except ValueError:
+        print(f"⚠️ Invalid integer for {name}={raw_value!r}. Falling back to {default}.")
+        return default
+
+
+ENABLE_PDF_PRELOAD = _env_flag("ENABLE_PDF_PRELOAD", "true")
+ENABLE_WEBSITE_PRELOAD = _env_flag("ENABLE_WEBSITE_PRELOAD", "true")
+WEBSITE_PRELOAD_MODE = os.getenv("WEBSITE_PRELOAD_MODE", "background").lower()
+USE_PLAYWRIGHT = _env_flag("USE_PLAYWRIGHT", "false")
+MAX_WEB_PAGES = _env_int("MAX_WEB_PAGES", 15)
+
+if WEBSITE_PRELOAD_MODE not in {"background", "sync"}:
+    print(f"⚠️ Unknown WEBSITE_PRELOAD_MODE={WEBSITE_PRELOAD_MODE!r}. Falling back to 'background'.")
+    WEBSITE_PRELOAD_MODE = "background"
 
 # ------------------------------------------------------------------
 # Global vectorstores for each content source
@@ -114,8 +142,12 @@ def preload_website_data():
         print("⚠️ SOURCE_URL not configured. Skipping website scraping.")
         return
     
-    print(f"🌐 Starting to crawl website: {SOURCE_URL}")
-    text = get_all_pages_from_website(SOURCE_URL, max_pages=50)
+    print(f"🌐 Starting to crawl website: {SOURCE_URL} (max_pages={MAX_WEB_PAGES})")
+    text = get_all_pages_from_website(
+        SOURCE_URL,
+        max_pages=MAX_WEB_PAGES,
+        use_js_rendering=USE_PLAYWRIGHT
+    )
     if text:
         web_vectorstore = build_vector_store(text)
         print("✅ Website indexed (all pages).")
@@ -230,33 +262,36 @@ print("🚀 App is starting... loading sources.")
 # Load system instructions first
 load_system_instructions()
 
-try:
-    preload_pdf_data()
-    print("✅ Finished loading PDF.")
-except Exception as e:
-    print(f"⚠️ PDF load failed: {e}")
+if ENABLE_PDF_PRELOAD:
+    try:
+        preload_pdf_data()
+        print("✅ Finished loading PDF.")
+    except Exception as e:
+        print(f"⚠️ PDF load failed: {e}")
+else:
+    print("ℹ️ PDF preload disabled via ENABLE_PDF_PRELOAD.")
 
-try:
-    preload_website_data()
-    print("✅ Finished loading website.")
-except Exception as e:
-    print(f"⚠️ Website load failed: {e}")    
+def _load_website_sources():
+    try:
+        preload_website_data()
+        print("✅ Finished loading website.")
+    except Exception as e:
+        print(f"⚠️ Website load failed: {e}")
 
-# # ------------------------------------------------------------------
-# # Start the app and preload sources
-# # ------------------------------------------------------------------
-# if __name__ == "__main__":
-#     print("🚀 App is starting... loading sources.")
-#     try:
-#         preload_pdf_data()
-#         print("✅ Finished loading PDF.")
-#     except Exception as e:
-#         print(f"⚠️ PDF load failed: {e}")
+if ENABLE_WEBSITE_PRELOAD:
+    if WEBSITE_PRELOAD_MODE == "background":
+        print("⏳ Website preload running in a background thread.")
+        threading.Thread(target=_load_website_sources, name="website-preload", daemon=True).start()
+    else:
+        _load_website_sources()
+else:
+    print("ℹ️ Website preload disabled via ENABLE_WEBSITE_PRELOAD.")
 
-#     try:
-#         preload_website_data()
-#         print("✅ Finished loading website.")
-#     except Exception as e:
-#         print(f"⚠️ Website load failed: {e}")
-
-#     app.run(debug=True, host="0.0.0.0", port=5000)
+# ------------------------------------------------------------------
+# Start the app locally (for development/testing)
+# Note: Preloading happens at import time above for Gunicorn compatibility
+# ------------------------------------------------------------------
+if __name__ == "__main__":
+    # Sources are already loaded at import time, so we just start the server
+    print("🚀 Starting Flask development server...")
+    app.run(debug=True, host="0.0.0.0", port=5000)
