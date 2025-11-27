@@ -3,8 +3,8 @@ from flask_cors import CORS
 import os
 import threading
 import traceback
+import xml.etree.ElementTree as ET
 from dotenv import load_dotenv
-from PyPDF2 import PdfReader
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
@@ -20,7 +20,11 @@ from web_loader import get_all_pages_from_website
 # ------------------------------------------------------------------
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-PDF_PATH = os.path.join(os.path.dirname(__file__), os.getenv("PDF_PATH", "Manuj Rai.pdf"))
+PORTFOLIO_PATH = os.path.join(
+    os.path.dirname(__file__),
+    os.getenv("PORTFOLIO_PATH")
+    or os.getenv("PDF_PATH", "portfolio_data.xml")
+)
 SOURCE_URL = os.getenv("SOURCE_URL")
 INSTRUCTIONS_PATH = os.path.join(os.path.dirname(__file__), "instructions.txt")
 
@@ -54,7 +58,9 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
-ENABLE_PDF_PRELOAD = _env_flag("ENABLE_PDF_PRELOAD", "true")
+# Allow legacy ENABLE_PDF_PRELOAD to keep working as the default signal.
+_default_portfolio_preload = os.getenv("ENABLE_PDF_PRELOAD", "true")
+ENABLE_PORTFOLIO_PRELOAD = _env_flag("ENABLE_PORTFOLIO_PRELOAD", _default_portfolio_preload)
 ENABLE_WEBSITE_PRELOAD = _env_flag("ENABLE_WEBSITE_PRELOAD", "true")
 WEBSITE_PRELOAD_MODE = os.getenv("WEBSITE_PRELOAD_MODE", "background").lower()
 USE_PLAYWRIGHT = _env_flag("USE_PLAYWRIGHT", "false")
@@ -67,24 +73,42 @@ if WEBSITE_PRELOAD_MODE not in {"background", "sync"}:
 # ------------------------------------------------------------------
 # Global vectorstores for each content source
 # ------------------------------------------------------------------
-pdf_vectorstore = None
+portfolio_vectorstore = None
 web_vectorstore = None
 system_instructions = None
 
 # ------------------------------------------------------------------
-# Load and extract text from a PDF file
+# Load and extract text from the structured XML data file
 # ------------------------------------------------------------------
-def load_pdf_text(pdf_path):
+def load_portfolio_text(xml_path):
     try:
-        reader = PdfReader(pdf_path)
-        text = ""
-        for page in reader.pages:
-            content = page.extract_text()
+        if not os.path.exists(xml_path):
+            raise FileNotFoundError(f"{xml_path} does not exist.")
+
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+        lines = []
+
+        def walk(node, depth=0):
+            label = node.tag.replace("_", " ").strip()
+            content = (node.text or "").strip()
+            indent = "  " * depth
+
             if content:
-                text += content + "\n"
-        return text.strip()
+                lines.append(f"{indent}{label}: {content}")
+            elif node:
+                lines.append(f"{indent}{label}:")
+
+            for child in node:
+                walk(child, depth + 1)
+
+        walk(root)
+        return "\n".join(line for line in lines if line).strip()
+    except FileNotFoundError as e:
+        print(f"❌ Portfolio file not found: {e}")
+        return ""
     except Exception as e:
-        print(f"❌ Error loading PDF: {e}")
+        print(f"❌ Error parsing portfolio XML: {e}")
         return ""
 
 # ------------------------------------------------------------------
@@ -114,23 +138,23 @@ def build_vector_store(text):
     return FAISS.from_texts(chunks, embedding=embeddings)
 
 # ------------------------------------------------------------------
-# Load PDF and build vectorstore (if successful)
+# Load portfolio XML and build vectorstore (if successful)
 # ------------------------------------------------------------------
-def preload_pdf_data():
-    global pdf_vectorstore
-    print(f"📄 Attempting to load PDF at: {PDF_PATH}")
+def preload_portfolio_data():
+    global portfolio_vectorstore
+    print(f"📄 Attempting to load portfolio data at: {PORTFOLIO_PATH}")
 
     try:
-        text = load_pdf_text(PDF_PATH)
+        text = load_portfolio_text(PORTFOLIO_PATH)
         if text:
-            pdf_vectorstore = build_vector_store(text)
-            print("✅ PDF indexed.")
+            portfolio_vectorstore = build_vector_store(text)
+            print("✅ Portfolio data indexed.")
         else:
-            print("⚠️ PDF loaded but has no extractable text.")
+            print("⚠️ Portfolio file loaded but produced no usable text.")
     except FileNotFoundError:
-        print(f"❌ PDF file not found: {PDF_PATH}")
+        print(f"❌ Portfolio file not found: {PORTFOLIO_PATH}")
     except Exception as e:
-        print(f"❌ Error reading PDF: {e}")
+        print(f"❌ Error reading portfolio file: {e}")
 
 # ------------------------------------------------------------------
 # Load website content and build vectorstore (if successful)
@@ -158,24 +182,24 @@ def preload_website_data():
 # ------------------------------------------------------------------
 def create_fallback_qa_chain(model_name):
     # Prefer both sources if available
-    if pdf_vectorstore and web_vectorstore:
-        print("✅ Using both PDF and Website sources.")
+    if portfolio_vectorstore and web_vectorstore:
+        print("✅ Using both portfolio XML and website sources.")
         retriever = EnsembleRetriever(
             retrievers=[
-                pdf_vectorstore.as_retriever(search_type="similarity", k=3),
+                portfolio_vectorstore.as_retriever(search_type="similarity", k=3),
                 web_vectorstore.as_retriever(search_type="similarity", k=3)
             ],
             weights=[1.0, 1.0]
         )
 
-    # Use only PDF if website failed
-    elif pdf_vectorstore:
-        print("⚠️ Website unavailable. Using PDF only.")
-        retriever = pdf_vectorstore.as_retriever(search_type="similarity", k=3)
+    # Use only portfolio XML if website failed
+    elif portfolio_vectorstore:
+        print("⚠️ Website unavailable. Using portfolio data only.")
+        retriever = portfolio_vectorstore.as_retriever(search_type="similarity", k=3)
 
-    # Use only Website if PDF failed
+    # Use only Website if portfolio failed
     elif web_vectorstore:
-        print("⚠️ PDF unavailable. Using Website only.")
+        print("⚠️ Portfolio data unavailable. Using website only.")
         retriever = web_vectorstore.as_retriever(search_type="similarity", k=3)
 
     # Fail if both are unavailable
@@ -221,7 +245,7 @@ def health():
     return jsonify({
         "status": "ok",
         "version": "1.1",
-        "pdf_loaded": pdf_vectorstore is not None,
+        "portfolio_loaded": portfolio_vectorstore is not None,
         "website_loaded": web_vectorstore is not None,
         "source_url": SOURCE_URL
     })
@@ -261,14 +285,14 @@ print("🚀 App is starting... loading sources.")
 # Load system instructions first
 load_system_instructions()
 
-if ENABLE_PDF_PRELOAD:
+if ENABLE_PORTFOLIO_PRELOAD:
     try:
-        preload_pdf_data()
-        print("✅ Finished loading PDF.")
+        preload_portfolio_data()
+        print("✅ Finished loading portfolio data.")
     except Exception as e:
-        print(f"⚠️ PDF load failed: {e}")
+        print(f"⚠️ Portfolio load failed: {e}")
 else:
-    print("ℹ️ PDF preload disabled via ENABLE_PDF_PRELOAD.")
+    print("ℹ️ Portfolio preload disabled via ENABLE_PORTFOLIO_PRELOAD.")
 
 def _load_website_sources():
     try:

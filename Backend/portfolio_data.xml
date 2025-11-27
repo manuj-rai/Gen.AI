@@ -1,0 +1,101 @@
+<portfolio_data>
+  <personal>
+    <name>Manuj Rai</name>
+    <title>Full-Stack Developer, Software Engineer</title>
+    <location>Ahmedabad, India</location>
+    <email>imanujrai7@gmail.com</email>
+    <phone>+91 87999 33509</phone>
+    <linkedin>https://www.linkedin.com/in/manujrai</linkedin>
+    <github>https://github.com/manuj-rai</github>
+    <portfolio>https://manuj-rai.github.io/vcard-portfolio/</portfolio>
+    <summary>
+      Full-stack developer specializing in React, .NET, Python and SQL Server. 
+      I build scalable enterprise modules at Fibre2Fashion, focusing on clean architecture, reusable UI components, 
+      optimized APIs, stored procedures, and automation. I deliver features with strong attention to detail, 
+      maintainability, and performance.
+    </summary>
+  </personal>
+
+  <skills>
+    <languages>C#, TypeScript, JavaScript, SQL, HTML5, CSS3, Python, React, Node.js</languages>
+    <frameworks>ASP.NET MVC, ASP.NET Core, .NET Framework, Angular 14+, Node.js</frameworks>
+    <cloud>Azure App Service, Render, Vercel, Supabase</cloud>
+    <databases>SQL Server, MySQL, MongoDB, Supabase</databases>
+    <tools>Git, Azure DevOps, GitHub, Postman, Swagger, IIS, Visual Studio, VS Code, FastAPI, Docker</tools>
+    <domains>ERP, SaaS modules, reporting systems, workflow automation, subscription management, AI, ML</domains>
+  </skills>
+
+  <experience>
+    <job>
+      <title>Software Engineer</title>
+      <company>Fibre2Fashion</company>
+      <location>Ahmedabad, India</location>
+      <duration>2024 - Present</duration>
+      <summary>
+        Building and maintaining enterprise-grade modules across TexPro, ERP, and subscription systems. 
+        Work includes Angular UI development, ASP.NET backend APIs, and SQL Server stored procedures—ensuring 
+        stable releases, clean code, performance optimization, and scalable architecture.
+      </summary>
+      <achievements>
+        <item>Developed and optimized complex SQL procedures for TexPro modules with improved performance and cleaner logic.</item>
+        <item>Refactored controllers, repositories, and models to match clean folder architecture using separate header/data response patterns.</item>
+        <item>Implemented role-based access components using Angular and ASP.NET for secure feature-level permissions.</item>
+        <item>Improved subscription and user-access workflows by restructuring database queries and integrating stored procedures.</item>
+      </achievements>
+      <tech_stack>ASP.NET MVC, C#, Angular, Python, FastAPI, MongoDB, SQL Server, Stored Procedures, Azure DevOps, IIS, SourceTree</tech_stack>
+    </job>
+
+    <job>
+      <title>Full-Stack Developer</title>
+      <company>Freelance</company>
+      <location>Remote</location>
+      <duration>2024 - Present</duration>
+      <summary>
+        Delivered multiple client-based web applications including portfolio sites, 
+        admin dashboards, and API-driven modules using Node.js, Python, FastAPI, .NET and React.
+      </summary>
+      <achievements>
+        <item>Built custom dashboards using React with role-based grids, reusable components, and REST APIs.</item>
+        <item>Delivered .NET-based backend services for customer portals and data-driven applications.</item>
+        <item>Developed portfolio websites and landing pages with optimized SEO, UI responsiveness, and fast loading times.</item>
+      </achievements>
+      <tech_stack>React, ASP.NET Core, C#, Python, FastAPI, SQL Server, Node.js</tech_stack>
+    </job>
+  </experience>
+
+  <projects>
+    <project>
+      <name>AI Resume Analyzer</name>
+      <role>Developer</role>
+      <duration>2024</duration>
+      <description>
+        Small-scale AI tool using Python + GPT APIs to extract structured data from resumes and evaluate candidate profiles.
+      </description>
+      <impact>Reduced manual analysis time for early-stage screening by auto-summarizing resumes.</impact>
+      <tech_stack>Python, FastAPI, OpenAI API</tech_stack>
+    </project>
+
+    <project>
+      <name>ERP Access Control Module</name>
+      <role>Lead Developer</role>
+      <duration>2023</duration>
+      <description>
+        Built a role-based access control module for Fibre2Fashion using ASP.NET MVC and SQL Server with front-end Angular support.
+      </description>
+      <impact>Improved accuracy and security of user-access workflows and reduced manual onboarding time.</impact>
+      <tech_stack>ASP.NET MVC, C#, Angular, SQL Server</tech_stack>
+    </project>
+  </projects>
+
+  <education>
+    <degree>
+      <program>Bachelor of Business Administration in Computer Applications (BBA-CA)</program>
+      <institution>Pune University</institution>
+      <duration>2021 - 2024</duration>
+      <highlights>
+        <item>Strong foundation in programming, databases, and full-stack development.</item>
+        <item>Built academic projects using .NET, SQL, and Angular.</item>
+      </highlights>
+    </degree>
+  </education>
+</portfolio_data>

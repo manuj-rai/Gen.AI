@@ -1,6 +1,6 @@
 # Portfolio Q&A Backend API
 
-A Flask-based backend API that provides Q&A capabilities about your portfolio using AI. It scrapes your portfolio website and uses your resume PDF to answer questions about you.
+A Flask-based backend API that provides Q&A capabilities about your portfolio using AI. It scrapes your portfolio website and ingests the structured `portfolio_data.xml` file to answer questions about you.
 
 ## 🚀 Local Setup & Running
 
@@ -29,9 +29,9 @@ Create a `.env` file in the root directory with the following variables:
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
 SOURCE_URL=https://manuj-rai.vercel.app/
-PDF_PATH=Manuj Rai.pdf
+PORTFOLIO_PATH=portfolio_data.xml
 # Optional tuning knobs (defaults shown)
-ENABLE_PDF_PRELOAD=true
+ENABLE_PORTFOLIO_PRELOAD=true
 ENABLE_WEBSITE_PRELOAD=true
 WEBSITE_PRELOAD_MODE=background   # set to sync to block startup
 MAX_WEB_PAGES=15
@@ -84,7 +84,7 @@ gunicorn app:app --bind 0.0.0.0:5000 --timeout 300
    Or open in browser: http://localhost:5000/health
 
    This will show:
-   - Status of PDF loading
+   - Status of portfolio XML loading
    - Status of website scraping
    - Source URL configuration
 
@@ -138,7 +138,7 @@ print(response.json())
 {
   "status": "ok",
   "version": "1.1",
-  "pdf_loaded": true,
+  "portfolio_loaded": true,
   "website_loaded": true,
   "source_url": "https://manuj-rai.vercel.app/"
 }
@@ -163,9 +163,9 @@ print(response.json())
 
 ## 🔧 Troubleshooting
 
-### Issue: PDF not loading
-- **Solution:** Make sure `Manuj Rai.pdf` exists in the root directory
-- Check the `PDF_PATH` in `.env` matches the actual filename
+### Issue: Portfolio XML not loading
+- **Solution:** Make sure `portfolio_data.xml` exists in the backend directory
+- Check the `PORTFOLIO_PATH` in `.env` matches the actual filename
 
 ### Issue: Website not scraping
 - **Solution:** 
@@ -196,7 +196,7 @@ print(response.json())
 When you start the application, it will:
 
 1. ✅ Load system instructions from `instructions.txt`
-2. ✅ Load and index your PDF resume (`Manuj Rai.pdf`)
+2. ✅ Load and index your structured portfolio data (`portfolio_data.xml`)
 3. ✅ Scrape and index all pages from your portfolio website
 4. ✅ Build vector stores for semantic search
 5. ✅ Be ready to answer questions!
