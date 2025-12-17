@@ -7,12 +7,13 @@
     <phone>+91 87999 33509</phone>
     <linkedin>https://www.linkedin.com/in/manujrai</linkedin>
     <github>https://github.com/manuj-rai</github>
-    <portfolio>https://manuj-rai.github.io/vcard-portfolio/</portfolio>
+    <instagram>https://www.instagram.com/manuj_rai_official</instagram>
+    <portfolio>https://manuj-rai.vercel.app/</portfolio>
     <summary>
-      Full-stack developer specializing in React, .NET, Python and SQL Server. 
-      I build scalable enterprise modules at Fibre2Fashion, focusing on clean architecture, reusable UI components, 
-      optimized APIs, stored procedures, and automation. I deliver features with strong attention to detail, 
-      maintainability, and performance.
+      Full-stack developer specializing in React, .NET, Python and SQL Server.
+      I build scalable enterprise modules at Fibre2Fashion, focusing on clean architecture,
+      reusable UI components, optimized APIs, stored procedures, and automation.
+      I deliver features with strong attention to detail, maintainability, and performance.
     </summary>
   </personal>
 
@@ -32,60 +33,78 @@
       <location>Ahmedabad, India</location>
       <duration>2024 - Present</duration>
       <summary>
-        Building and maintaining enterprise-grade modules across TexPro, ERP, and subscription systems. 
-        Work includes Angular UI development, ASP.NET backend APIs, and SQL Server stored procedures—ensuring 
-        stable releases, clean code, performance optimization, and scalable architecture.
+        Building and maintaining enterprise-grade modules across TexPro, ERP,
+        and subscription systems using Angular, ASP.NET, and SQL Server.
       </summary>
       <achievements>
-        <item>Developed and optimized complex SQL procedures for TexPro modules with improved performance and cleaner logic.</item>
-        <item>Refactored controllers, repositories, and models to match clean folder architecture using separate header/data response patterns.</item>
-        <item>Implemented role-based access components using Angular and ASP.NET for secure feature-level permissions.</item>
-        <item>Improved subscription and user-access workflows by restructuring database queries and integrating stored procedures.</item>
+        <item>Developed and optimized complex SQL procedures for TexPro modules.</item>
+        <item>Refactored controllers, repositories, and models into clean architecture.</item>
+        <item>Implemented role-based access components using Angular and ASP.NET.</item>
+        <item>Improved subscription and user-access workflows via DB restructuring.</item>
       </achievements>
-      <tech_stack>ASP.NET MVC, C#, Angular, Python, FastAPI, MongoDB, SQL Server, Stored Procedures, Azure DevOps, IIS, SourceTree</tech_stack>
+      <tech_stack>
+        ASP.NET MVC, C#, Angular, Python, FastAPI, MongoDB,
+        SQL Server, Stored Procedures, Azure DevOps, IIS
+      </tech_stack>
     </job>
 
     <job>
       <title>Full-Stack Developer</title>
       <company>Freelance</company>
       <location>Remote</location>
-      <duration>2024 - Present</duration>
+      <duration>2025 - Present</duration>
       <summary>
-        Delivered multiple client-based web applications including portfolio sites, 
-        admin dashboards, and API-driven modules using Node.js, Python, FastAPI, .NET and React.
+        Delivered client-based web applications including dashboards,
+        portfolio sites, and API-driven platforms.
       </summary>
       <achievements>
-        <item>Built custom dashboards using React with role-based grids, reusable components, and REST APIs.</item>
-        <item>Delivered .NET-based backend services for customer portals and data-driven applications.</item>
-        <item>Developed portfolio websites and landing pages with optimized SEO, UI responsiveness, and fast loading times.</item>
+        <item>Built React dashboards with reusable components and role-based grids.</item>
+        <item>Delivered .NET backend services for customer portals.</item>
+        <item>Optimized SEO and performance for portfolio websites.</item>
       </achievements>
-      <tech_stack>React, ASP.NET Core, C#, Python, FastAPI, SQL Server, Node.js</tech_stack>
+      <tech_stack>React, Python, FastAPI, SupaBase, Node.js, Vercel, SEO</tech_stack>
     </job>
   </experience>
 
-  <projects>
-    <project>
-      <name>AI Resume Analyzer</name>
-      <role>Developer</role>
-      <duration>2024</duration>
-      <description>
-        Small-scale AI tool using Python + GPT APIs to extract structured data from resumes and evaluate candidate profiles.
-      </description>
-      <impact>Reduced manual analysis time for early-stage screening by auto-summarizing resumes.</impact>
-      <tech_stack>Python, FastAPI, OpenAI API</tech_stack>
-    </project>
+	<projects>
 
-    <project>
-      <name>ERP Access Control Module</name>
-      <role>Lead Developer</role>
-      <duration>2023</duration>
-      <description>
-        Built a role-based access control module for Fibre2Fashion using ASP.NET MVC and SQL Server with front-end Angular support.
-      </description>
-      <impact>Improved accuracy and security of user-access workflows and reduced manual onboarding time.</impact>
-      <tech_stack>ASP.NET MVC, C#, Angular, SQL Server</tech_stack>
-    </project>
-  </projects>
+	  <project>
+		<name>AI Knowledge-Based Chatbot</name>
+		<role>AI / Full-Stack Developer</role>
+		<duration>2025</duration>
+		<description>
+		  An intelligent AI chatbot built using NLP and Large Language Models (LLMs),
+		  integrated with FAISS-based vector search to deliver accurate, context-aware
+		  responses from structured and unstructured data sources.
+		</description>
+		<impact>
+		  Improved information retrieval accuracy and reduced manual query handling
+		  by enabling semantic search-driven conversational responses.
+		</impact>
+		<tech_stack>
+		  Python, NLP, LLMs, FAISS, Vector Database, FastAPI, OpenAI API
+		</tech_stack>
+	  </project>
+
+	  <project>
+		<name>Flying Horses Production</name>
+		<role>Frontend Developer</role>
+		<duration>2025</duration>
+		<description>
+		  A professional website developed for a creative production company with a
+		  secure portfolio access system using mobile number OTP verification to prevent
+		  unauthorized viewing of client work.
+		</description>
+		<impact>
+		  Protected sensitive portfolio content, improved lead quality, and reduced
+		  competitor access through secure OTP-based verification.
+		</impact>
+		<tech_stack>
+		  React, Vite, TypeScript, HTML5, Tailwind CSS, MSG91 OTP Widget
+		</tech_stack>
+	  </project>
+
+	</projects>
 
   <education>
     <degree>
@@ -93,7 +112,7 @@
       <institution>Pune University</institution>
       <duration>2021 - 2024</duration>
       <highlights>
-        <item>Strong foundation in programming, databases, and full-stack development.</item>
+        <item>Strong foundation in programming and databases.</item>
         <item>Built academic projects using .NET, SQL, and Angular.</item>
       </highlights>
     </degree>
