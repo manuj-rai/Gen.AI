@@ -1,116 +1,220 @@
+from __future__ import annotations
+
+import logging
+from collections import deque
+from dataclasses import dataclass
+from urllib.parse import urljoin, urlparse, urlunparse
+
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
-from typing import Set
+
+try:
+    from playwright.sync_api import sync_playwright
+except Exception:  # pragma: no cover - optional dependency at runtime
+    sync_playwright = None
 
 
-def get_all_pages_from_website(base_url: str, max_pages: int = 50) -> str:
-    """
-    Crawl all static pages from a website using only requests + BeautifulSoup.
-    Follows internal links and extracts clean text from each page.
-    
-    Args:
-        base_url: The starting URL (e.g., "https://manuj-rai.vercel.app/")
-        max_pages: Maximum number of pages to scrape
+logger = logging.getLogger("portfolio-assistant.web-loader")
 
-    Returns:
-        Combined clean text content from all pages
-    """
-    if not base_url:
-        return ""
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/124.0.0.0 Safari/537.36 PortfolioAssistantBot/2.0"
+)
+SKIP_EXTENSIONS = {
+    ".pdf",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".svg",
+    ".css",
+    ".js",
+    ".zip",
+    ".exe",
+    ".ico",
+    ".woff",
+    ".woff2",
+    ".mp4",
+    ".webm",
+    ".mp3",
+}
 
-    if not base_url.startswith(("http://", "https://")):
-        base_url = "https://" + base_url
 
+@dataclass
+class WebsitePage:
+    url: str
+    title: str
+    text: str
+
+
+def _normalize_url(url: str) -> str:
+    parsed = urlparse(url)
+    normalized = parsed._replace(query="", fragment="")
+    clean_url = urlunparse(normalized).rstrip("/")
+    return clean_url or url
+
+
+def _same_domain(url: str, base_netloc: str) -> bool:
+    return urlparse(url).netloc == base_netloc
+
+
+def _should_skip(url: str) -> bool:
+    lowered = url.lower()
+    return any(lowered.endswith(extension) for extension in SKIP_EXTENSIONS)
+
+
+def _parse_html(url: str, html: str, base_netloc: str) -> tuple[WebsitePage | None, list[str]]:
+    soup = BeautifulSoup(html, "html.parser")
+
+    for tag in soup(["script", "style", "noscript", "header", "footer", "nav"]):
+        tag.decompose()
+
+    title = _clean_text(soup.title.get_text(" ", strip=True) if soup.title else "")
+    body_text = soup.get_text(separator="\n")
+    lines = [_clean_text(line) for line in body_text.splitlines()]
+    clean_lines = [line for line in lines if line]
+
+    page = None
+    if clean_lines:
+        page = WebsitePage(
+            url=url,
+            title=title or url,
+            text="\n".join(clean_lines),
+        )
+
+    links: list[str] = []
+    for link in soup.find_all("a", href=True):
+        absolute_url = _normalize_url(urljoin(url, link["href"]))
+        if not absolute_url.startswith(("http://", "https://")):
+            continue
+        if not _same_domain(absolute_url, base_netloc):
+            continue
+        if _should_skip(absolute_url):
+            continue
+        links.append(absolute_url)
+
+    return page, links
+
+
+def _clean_text(value: str) -> str:
+    return " ".join(value.split()).strip()
+
+
+def _crawl_with_requests(base_url: str, max_pages: int, timeout_seconds: int = 12) -> list[WebsitePage]:
     parsed_base = urlparse(base_url)
-    base_domain = f"{parsed_base.scheme}://{parsed_base.netloc}"
+    base_netloc = parsed_base.netloc
 
     session = requests.Session()
-    session.headers.update({
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/122.0.0.0 Safari/537.36"
-    })
+    session.headers.update({"User-Agent": USER_AGENT})
 
-    visited_urls: Set[str] = set()
-    urls_to_visit: list = [base_url]
-    all_text_content = []
+    visited: set[str] = set()
+    queued = deque([base_url])
+    pages: list[WebsitePage] = []
 
-    print(f"🌐 Starting to crawl website: {base_url}")
-    
-    while urls_to_visit and len(visited_urls) < max_pages:
-        current_url = urls_to_visit.pop(0)
-
-        if current_url in visited_urls:
+    while queued and len(visited) < max_pages:
+        current_url = queued.popleft()
+        if current_url in visited:
             continue
 
-        visited_urls.add(current_url)
-        print(f"📄 Scraping: {current_url}")
+        visited.add(current_url)
+        logger.info("Scraping %s", current_url)
 
         try:
-            response = session.get(current_url, timeout=10)
+            response = session.get(current_url, timeout=timeout_seconds)
             response.raise_for_status()
-        except requests.RequestException as e:
-            print(f"❌ Error fetching {current_url}: {e}")
+        except requests.RequestException as exc:
+            logger.warning("Failed to fetch %s: %s", current_url, exc)
             continue
 
         content_type = response.headers.get("content-type", "").lower()
         if "text/html" not in content_type:
-            print(f"⚠️ Skipping non-HTML content: {current_url}")
+            logger.info("Skipping non-HTML content at %s", current_url)
             continue
 
-        soup = BeautifulSoup(response.text, "html.parser")
+        page, discovered_links = _parse_html(current_url, response.text, base_netloc)
+        if page is not None:
+            pages.append(page)
 
-        # Remove unwanted tags
-        for tag in soup(["script", "style", "noscript", "header", "footer", "nav"]):
-            tag.decompose()
+        for discovered_url in discovered_links:
+            if discovered_url not in visited and discovered_url not in queued:
+                queued.append(discovered_url)
 
-        text = soup.get_text(separator="\n")
-        clean_lines = [line.strip() for line in text.splitlines() if line.strip()]
-
-        if clean_lines:
-            page_content = f"\n\n--- Page: {current_url} ---\n\n" + "\n".join(clean_lines)
-            all_text_content.append(page_content)
-            print(f"✅ Scraped {len(clean_lines)} lines from {current_url}")
-        else:
-            print(f"⚠️ No content found on {current_url}")
-
-        # Discover internal links
-        if len(visited_urls) < max_pages:
-            links_found = 0
-            for link in soup.find_all("a", href=True):
-                href = link["href"]
-                absolute_url = urljoin(current_url, href)
-                parsed_link = urlparse(absolute_url)
-
-                # Only follow links on same domain
-                if parsed_link.netloc == parsed_base.netloc:
-                    clean_url = f"{parsed_link.scheme}://{parsed_link.netloc}{parsed_link.path}".rstrip("/")
-                    if clean_url not in visited_urls and clean_url not in urls_to_visit:
-                        # Filter out static file types
-                        skip_exts = [".pdf", ".jpg", ".jpeg", ".png", ".gif", ".svg", ".css", ".js",
-                                     ".zip", ".exe", ".ico", ".woff", ".woff2"]
-                        if not any(clean_url.lower().endswith(ext) for ext in skip_exts):
-                            urls_to_visit.append(clean_url)
-                            links_found += 1
-
-            if links_found:
-                print(f"🔗 Found {links_found} new links to crawl")
-
-    print(f"✅ Crawled {len(visited_urls)} pages from {base_domain}")
-    print(f"📊 Total content lines: {sum(len(p.splitlines()) for p in all_text_content)}")
-    return "\n".join(all_text_content)
+    return pages
 
 
-# Optional: for legacy single URL scraping
+def _crawl_with_playwright(base_url: str, max_pages: int, timeout_seconds: int = 20) -> list[WebsitePage]:
+    if sync_playwright is None:
+        raise RuntimeError("Playwright is not available in this environment.")
+
+    parsed_base = urlparse(base_url)
+    base_netloc = parsed_base.netloc
+    visited: set[str] = set()
+    queued = deque([base_url])
+    pages: list[WebsitePage] = []
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        page_handle = browser.new_page(user_agent=USER_AGENT)
+        page_handle.set_default_navigation_timeout(timeout_seconds * 1000)
+
+        try:
+            while queued and len(visited) < max_pages:
+                current_url = queued.popleft()
+                if current_url in visited:
+                    continue
+
+                visited.add(current_url)
+                logger.info("Scraping with Playwright %s", current_url)
+
+                try:
+                    page_handle.goto(current_url, wait_until="domcontentloaded")
+                    html = page_handle.content()
+                except Exception as exc:
+                    logger.warning("Playwright failed to fetch %s: %s", current_url, exc)
+                    continue
+
+                parsed_page, discovered_links = _parse_html(current_url, html, base_netloc)
+                if parsed_page is not None:
+                    pages.append(parsed_page)
+
+                for discovered_url in discovered_links:
+                    if discovered_url not in visited and discovered_url not in queued:
+                        queued.append(discovered_url)
+        finally:
+            browser.close()
+
+    return pages
+
+
+def crawl_website_pages(base_url: str, max_pages: int = 50, use_playwright: bool = False) -> list[WebsitePage]:
+    if not base_url:
+        return []
+
+    normalized_base_url = base_url if base_url.startswith(("http://", "https://")) else f"https://{base_url}"
+    normalized_base_url = _normalize_url(normalized_base_url)
+
+    if use_playwright:
+        try:
+            pages = _crawl_with_playwright(normalized_base_url, max_pages=max_pages)
+            logger.info("Playwright crawl collected %s page(s).", len(pages))
+            return pages
+        except Exception as exc:
+            logger.warning("Playwright crawl failed, falling back to requests: %s", exc)
+
+    pages = _crawl_with_requests(normalized_base_url, max_pages=max_pages)
+    logger.info("Requests crawl collected %s page(s).", len(pages))
+    return pages
+
+
+def get_all_pages_from_website(base_url: str, max_pages: int = 50) -> str:
+    pages = crawl_website_pages(base_url, max_pages=max_pages)
+    blocks = [f"--- Page: {page.url} ---\n{page.text}" for page in pages if page.text]
+    return "\n\n".join(blocks)
+
+
 def fetch_clean_text_from_url(url: str) -> str:
-    try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html.parser")
-        for tag in soup(["script", "style", "noscript", "header", "footer", "nav"]):
-            tag.decompose()
-        text = soup.get_text(separator="\n")
-        clean_lines = [line.strip() for line in text.splitlines() if line.strip()]
-        return "\n".join(clean_lines)
-    except Exception as e:
-        print(f"❌ Error scraping {url}: {e}")
+    pages = crawl_website_pages(url, max_pages=1)
+    if not pages:
         return ""
+    return pages[0].text
