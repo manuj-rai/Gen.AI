@@ -19,25 +19,11 @@ logger = logging.getLogger("portfolio-assistant.web-loader")
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) "
-    "Chrome/124.0.0.0 Safari/537.36 PortfolioAssistantBot/2.0"
+    "Chrome/124.0.0.0 Safari/537.36 PortfolioAssistantBot/2.1"
 )
 SKIP_EXTENSIONS = {
-    ".pdf",
-    ".jpg",
-    ".jpeg",
-    ".png",
-    ".gif",
-    ".svg",
-    ".css",
-    ".js",
-    ".zip",
-    ".exe",
-    ".ico",
-    ".woff",
-    ".woff2",
-    ".mp4",
-    ".webm",
-    ".mp3",
+    ".pdf", ".jpg", ".jpeg", ".png", ".gif", ".svg", ".css", ".js",
+    ".zip", ".exe", ".ico", ".woff", ".woff2", ".mp4", ".webm", ".mp3",
 }
 
 
@@ -64,6 +50,10 @@ def _should_skip(url: str) -> bool:
     return any(lowered.endswith(extension) for extension in SKIP_EXTENSIONS)
 
 
+def _clean_text(value: str) -> str:
+    return " ".join(value.split()).strip()
+
+
 def _parse_html(url: str, html: str, base_netloc: str) -> tuple[WebsitePage | None, list[str]]:
     soup = BeautifulSoup(html, "html.parser")
 
@@ -77,11 +67,7 @@ def _parse_html(url: str, html: str, base_netloc: str) -> tuple[WebsitePage | No
 
     page = None
     if clean_lines:
-        page = WebsitePage(
-            url=url,
-            title=title or url,
-            text="\n".join(clean_lines),
-        )
+        page = WebsitePage(url=url, title=title or url, text="\n".join(clean_lines))
 
     links: list[str] = []
     for link in soup.find_all("a", href=True):
@@ -97,10 +83,6 @@ def _parse_html(url: str, html: str, base_netloc: str) -> tuple[WebsitePage | No
     return page, links
 
 
-def _clean_text(value: str) -> str:
-    return " ".join(value.split()).strip()
-
-
 def _crawl_with_requests(base_url: str, max_pages: int, timeout_seconds: int = 12) -> list[WebsitePage]:
     parsed_base = urlparse(base_url)
     base_netloc = parsed_base.netloc
@@ -109,7 +91,7 @@ def _crawl_with_requests(base_url: str, max_pages: int, timeout_seconds: int = 1
     session.headers.update({"User-Agent": USER_AGENT})
 
     visited: set[str] = set()
-    queued = deque([base_url])
+    queued: deque[str] = deque([base_url])
     pages: list[WebsitePage] = []
 
     while queued and len(visited) < max_pages:
@@ -150,7 +132,7 @@ def _crawl_with_playwright(base_url: str, max_pages: int, timeout_seconds: int =
     parsed_base = urlparse(base_url)
     base_netloc = parsed_base.netloc
     visited: set[str] = set()
-    queued = deque([base_url])
+    queued: deque[str] = deque([base_url])
     pages: list[WebsitePage] = []
 
     with sync_playwright() as playwright:
@@ -191,30 +173,17 @@ def crawl_website_pages(base_url: str, max_pages: int = 50, use_playwright: bool
     if not base_url:
         return []
 
-    normalized_base_url = base_url if base_url.startswith(("http://", "https://")) else f"https://{base_url}"
-    normalized_base_url = _normalize_url(normalized_base_url)
+    normalized = base_url if base_url.startswith(("http://", "https://")) else f"https://{base_url}"
+    normalized = _normalize_url(normalized)
 
     if use_playwright:
         try:
-            pages = _crawl_with_playwright(normalized_base_url, max_pages=max_pages)
+            pages = _crawl_with_playwright(normalized, max_pages=max_pages)
             logger.info("Playwright crawl collected %s page(s).", len(pages))
             return pages
         except Exception as exc:
             logger.warning("Playwright crawl failed, falling back to requests: %s", exc)
 
-    pages = _crawl_with_requests(normalized_base_url, max_pages=max_pages)
+    pages = _crawl_with_requests(normalized, max_pages=max_pages)
     logger.info("Requests crawl collected %s page(s).", len(pages))
     return pages
-
-
-def get_all_pages_from_website(base_url: str, max_pages: int = 50) -> str:
-    pages = crawl_website_pages(base_url, max_pages=max_pages)
-    blocks = [f"--- Page: {page.url} ---\n{page.text}" for page in pages if page.text]
-    return "\n\n".join(blocks)
-
-
-def fetch_clean_text_from_url(url: str) -> str:
-    pages = crawl_website_pages(url, max_pages=1)
-    if not pages:
-        return ""
-    return pages[0].text
