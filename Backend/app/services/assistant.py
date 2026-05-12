@@ -378,10 +378,13 @@ class PortfolioAssistantService:
     ) -> list[dict[str, Any]]:
         input_items: list[dict[str, Any]] = []
         for message in messages[-self.settings.max_history_messages :]:
+            role = message["role"]
+            # Responses API: assistant messages use output_text; user/system/developer use input_text.
+            content_type = "output_text" if role == "assistant" else "input_text"
             input_items.append(
                 {
-                    "role": message["role"],
-                    "content": [{"type": "input_text", "text": message["content"]}],
+                    "role": role,
+                    "content": [{"type": content_type, "text": message["content"]}],
                 }
             )
         input_items.append(
